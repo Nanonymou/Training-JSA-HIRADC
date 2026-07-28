@@ -1,7 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { CalendarClock, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
@@ -77,14 +84,31 @@ function Field({
  * unlocked; the registration persists per device (the stub for the eventual
  * Daftar Hadir POST), so returning here shows the confirmation, not a blank form.
  */
+/** How long the success card shows before the quiz redirect fires. */
+const REDIRECT_DELAY_MS = 1600;
+
 export function RegistrationForm() {
   const reduceMotion = useReducedMotion();
+  const router = useRouter();
   const { peserta, register, clear } = usePeserta();
 
   const [values, setValues] = useState<PesertaFormValues>(EMPTY);
   const [errors, setErrors] = useState<PesertaFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  // Set right after a successful submit so the quiz redirect only fires for a
+  // fresh registration — not every time an already-signed peserta reopens this.
+  const [redirecting, setRedirecting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const goToQuiz = useCallback(() => router.push("/quiz"), [router]);
+
+  // Once the daftar hadir is saved, hand the peserta straight to the (now
+  // unlocked) quiz after a short beat so they can see the confirmation.
+  useEffect(() => {
+    if (!redirecting) return;
+    const timer = setTimeout(goToQuiz, REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [redirecting, goToQuiz]);
 
   function update(field: keyof PesertaFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -133,6 +157,7 @@ export function RegistrationForm() {
     setSubmitting(false);
     setValues(EMPTY);
     setErrors({});
+    setRedirecting(true);
   }
 
   const fade = reduceMotion
@@ -161,7 +186,9 @@ export function RegistrationForm() {
                 Daftar hadir tersimpan
               </h2>
               <p className="text-muted-foreground text-sm">
-                Terima kasih, {peserta.nama}. Menu Quiz kini terbuka.
+                {redirecting
+                  ? "Kehadiran tercatat. Mengalihkan ke Quiz…"
+                  : `Terima kasih, ${peserta.nama}. Menu Quiz kini terbuka.`}
               </p>
             </div>
           </div>
@@ -190,10 +217,17 @@ export function RegistrationForm() {
             Tercatat otomatis: {formatWaktu(peserta.waktuHadir)}
           </div>
 
-          <div>
-            <Button variant="outline" size="sm" onClick={clear}>
-              Ubah data
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={goToQuiz}>
+              {redirecting && <Loader2 className="animate-spin" />}
+              {redirecting ? "Ke Quiz sekarang" : "Lanjut ke Quiz"}
+              {!redirecting && <ArrowRight />}
             </Button>
+            {!redirecting && (
+              <Button variant="outline" size="sm" onClick={clear}>
+                Ubah data
+              </Button>
+            )}
           </div>
         </motion.div>
       ) : (
