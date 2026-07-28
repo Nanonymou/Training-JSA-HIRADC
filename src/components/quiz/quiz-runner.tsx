@@ -4,27 +4,27 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { QuizQuestion } from "@/lib/quiz/questions";
+import type { QuizAttemptQuestion } from "@/lib/quiz/attempt";
 import { cn } from "@/lib/utils";
 
 /** A → B → C … labels for the options. */
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 /**
- * The quiz runner over a served set of questions (mock data for now).
+ * The quiz runner over a randomised attempt.
  *
  * Renders every question with selectable options and tracks the peserta's
  * answers, showing how many are done. Submit stays disabled until all are
- * answered, then hands the answers up via `onSubmit`. Random sampling/shuffling
- * and automatic grading arrive in later tasks; this task establishes the
- * answering UI on the mock question bank.
+ * answered, then hands the answers up via `onSubmit` (keyed by question id, value
+ * = the chosen option index within that question's shuffled options). Grading
+ * against the passing grade is a later task; this collects the answers.
  */
 export function QuizRunner({
   questions,
   onSubmit,
   onExit,
 }: {
-  questions: QuizQuestion[];
+  questions: QuizAttemptQuestion[];
   onSubmit: (answers: Record<string, number>) => void;
   onExit: () => void;
 }) {

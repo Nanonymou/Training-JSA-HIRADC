@@ -7,8 +7,8 @@ import { QuizIntro } from "@/components/quiz/quiz-intro";
 import { QuizLocked } from "@/components/quiz/quiz-locked";
 import { QuizRunner } from "@/components/quiz/quiz-runner";
 import { Button } from "@/components/ui/button";
+import { buildQuizAttempt, type QuizAttemptQuestion } from "@/lib/quiz/attempt";
 import { QUIZ_CONFIG } from "@/lib/quiz/config";
-import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
 import { usePeserta } from "@/hooks/use-peserta";
 
 type Stage = "intro" | "running" | "submitted";
@@ -17,26 +17,32 @@ type Stage = "intro" | "running" | "submitted";
  * The quiz's prerequisite gate and flow.
  *
  * No signed Daftar Hadir → the locked state. Otherwise it walks intro → runner →
- * a submitted acknowledgement. The served set is the first `jumlahSoal` of the
- * mock bank for now (random sampling and shuffling land in a later task), and
- * grading against the passing grade is its own upcoming task — so submit here
- * just acknowledges the attempt.
+ * a submitted acknowledgement. Starting an attempt draws a fresh randomised set
+ * (random questions, shuffled options) so every run differs. Grading against the
+ * passing grade is its own upcoming task — so submit here just acknowledges the
+ * attempt.
  */
 export function QuizGate() {
   const { peserta } = usePeserta();
   const [stage, setStage] = useState<Stage>("intro");
+  const [attempt, setAttempt] = useState<QuizAttemptQuestion[]>([]);
   const [answeredCount, setAnsweredCount] = useState(0);
 
   if (!peserta) {
     return <QuizLocked />;
   }
 
-  const served = QUIZ_QUESTIONS.slice(0, QUIZ_CONFIG.jumlahSoal);
+  function start() {
+    // Build the randomised attempt here (a client event) so Math.random never
+    // runs during render/SSR.
+    setAttempt(buildQuizAttempt(QUIZ_CONFIG.jumlahSoal));
+    setStage("running");
+  }
 
   if (stage === "running") {
     return (
       <QuizRunner
-        questions={served}
+        questions={attempt}
         onExit={() => setStage("intro")}
         onSubmit={(answers) => {
           setAnsweredCount(Object.keys(answers).length);
@@ -57,7 +63,7 @@ export function QuizGate() {
             Jawaban terkumpul
           </h2>
           <p className="text-muted-foreground text-sm text-pretty">
-            {answeredCount} dari {served.length} soal terjawab. Penilaian
+            {answeredCount} dari {attempt.length} soal terjawab. Penilaian
             otomatis dan nilai kelulusan akan aktif pada langkah berikutnya.
           </p>
         </div>
@@ -68,10 +74,5 @@ export function QuizGate() {
     );
   }
 
-  return (
-    <QuizIntro
-      pesertaNama={peserta.nama}
-      onStart={() => setStage("running")}
-    />
-  );
+  return <QuizIntro pesertaNama={peserta.nama} onStart={start} />;
 }
