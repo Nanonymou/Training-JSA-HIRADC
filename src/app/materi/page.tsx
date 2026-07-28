@@ -3,6 +3,7 @@ import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 
 import { MateriShell } from "@/components/materi/materi-shell";
+import { getMateriChapters } from "@/lib/materi/repository";
 
 export const metadata: Metadata = {
   title: "Materi Pelatihan — Training JSA & HIRADC",
@@ -16,9 +17,12 @@ export const metadata: Metadata = {
  * Turns the JSA & HIRADC handbook into a browsable, chapter-based reader. The
  * page supplies the framing — brand row and a short intro — and hands the
  * chapter navigation and content to the shell, which manages the active chapter
- * on the client. Content is seed data for now; a later phase wires it to Postgres.
+ * on the client. Chapters are loaded server-side from the material repository
+ * (the same source the /api/materi endpoint serves).
  */
-export default function MateriPage() {
+export default async function MateriPage() {
+  const chapters = await getMateriChapters();
+
   return (
     <div className="bg-background flex min-h-dvh flex-col">
       <header className="bg-card border-border flex h-14 shrink-0 items-center gap-3 border-b px-4">
@@ -49,7 +53,7 @@ export default function MateriPage() {
           </p>
         </div>
 
-        <MateriShell />
+        <MateriShell chapters={chapters} />
       </main>
     </div>
   );
