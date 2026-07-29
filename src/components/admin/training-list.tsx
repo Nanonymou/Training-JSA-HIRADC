@@ -53,6 +53,18 @@ export function TrainingList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TrainingItem | null>(null);
 
+  // Persist a mutation to the training API (added in the backend phase); the
+  // local state above keeps this working before the endpoint exists.
+  function persist(action: string, payload: Record<string, unknown>) {
+    void fetch("/api/admin/training", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...payload }),
+    }).catch(() => {
+      // Endpoint not available yet — local state already updated.
+    });
+  }
+
   function openAdd() {
     setEditing(null);
     setFormOpen(true);
@@ -76,6 +88,7 @@ export function TrainingList() {
             : item,
         ),
       );
+      persist("update", { id: editing.id, ...draft });
       toast({ title: "Training diperbarui", description: draft.judul, variant: "success" });
     } else {
       const id =
@@ -93,6 +106,7 @@ export function TrainingList() {
         },
         ...current,
       ]);
+      persist("create", { id, ...draft });
       toast({ title: "Training ditambahkan", description: draft.judul, variant: "success" });
     }
     setFormOpen(false);
@@ -104,6 +118,7 @@ export function TrainingList() {
       current.map((item) => (item.id === id ? { ...item, aktif } : item)),
     );
     const item = items.find((i) => i.id === id);
+    persist("toggle", { id, aktif });
     toast({
       title: aktif ? "Training diaktifkan" : "Training dinonaktifkan",
       description: item?.judul,
@@ -117,6 +132,7 @@ export function TrainingList() {
         i.id === item.id ? { ...i, archived: true, aktif: false } : i,
       ),
     );
+    persist("archive", { id: item.id });
     toast({ title: "Training diarsipkan", description: item.judul, variant: "info" });
   }
 
@@ -124,6 +140,7 @@ export function TrainingList() {
     setItems((current) =>
       current.map((i) => (i.id === item.id ? { ...i, archived: false } : i)),
     );
+    persist("restore", { id: item.id });
     toast({ title: "Training dipulihkan", description: item.judul, variant: "success" });
   }
 
