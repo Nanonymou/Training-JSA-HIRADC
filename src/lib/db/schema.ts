@@ -67,6 +67,32 @@ export const quizAttempts = pgTable("quiz_attempts", {
     .defaultNow(),
 });
 
+/**
+ * A submitted latihan file (PRD: UPLOAD_LATIHAN).
+ *
+ * One row per uploaded file. `urlBerkas` is the Vercel Blob URL; `status` starts
+ * "Pending" and an admin later moves it to Disetujui / Perlu Revisi / Ditolak
+ * with an optional comment. Peserta identity is denormalised (as elsewhere)
+ * since attendance is a cookie session, not a peserta table — so the review and
+ * Data Peserta screens can list and filter per site without a join.
+ */
+export const uploads = pgTable("uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: text("training_id").notNull().default("jsa-hiradc"),
+  pesertaNama: text("peserta_nama").notNull(),
+  pesertaEmail: text("peserta_email").notNull(),
+  lokasi: text("lokasi"),
+  fileName: text("file_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  fileExt: text("file_ext").notNull(),
+  urlBerkas: text("url_berkas").notNull(),
+  status: text("status").notNull().default("Pending"),
+  adminComment: text("admin_comment"),
+  waktuUnggah: timestamp("waktu_unggah", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const questionsRelations = relations(questions, ({ many }) => ({
   options: many(questionOptions),
 }));
@@ -87,3 +113,5 @@ export type QuestionOptionRow = typeof questionOptions.$inferSelect;
 export type NewQuestionOptionRow = typeof questionOptions.$inferInsert;
 export type QuizAttemptRow = typeof quizAttempts.$inferSelect;
 export type NewQuizAttemptRow = typeof quizAttempts.$inferInsert;
+export type UploadRow = typeof uploads.$inferSelect;
+export type NewUploadRow = typeof uploads.$inferInsert;
