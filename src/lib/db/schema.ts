@@ -127,6 +127,12 @@ export const uploads = pgTable("uploads", {
  */
 export const trainings = pgTable("trainings", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Stable slug that scopes content to this training. Matches the `training_id`
+   * text columns on questions/peserta/uploads/quiz_attempts (default
+   * "jsa-hiradc"), so a training row and its content share one key.
+   */
+  slug: text("slug").notNull().unique(),
   judul: text("judul").notNull(),
   deskripsi: text("deskripsi").notNull().default(""),
   aktif: boolean("aktif").notNull().default(false),
