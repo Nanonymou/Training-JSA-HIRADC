@@ -29,36 +29,8 @@ export interface MateriVersion {
   current: boolean;
 }
 
-/** Mock revision history for a training, newest first. */
-export const MATERI_VERSIONS: MateriVersion[] = [
-  {
-    id: "v3",
-    version: 3,
-    updatedBy: "Admin QHSE",
-    updatedAt: "2026-07-20T04:00:00.000Z",
-    jumlahBab: 6,
-    catatan: "Tambah bab Cara Mengisi HIRADC & perbaikan matriks risiko.",
-    current: true,
-  },
-  {
-    id: "v2",
-    version: 2,
-    updatedBy: "Admin QHSE",
-    updatedAt: "2026-07-08T03:20:00.000Z",
-    jumlahBab: 5,
-    catatan: "Revisi contoh JSA menggoreng dan penambahan latihan.",
-    current: false,
-  },
-  {
-    id: "v1",
-    version: 1,
-    updatedBy: "Admin QHSE",
-    updatedAt: "2026-06-30T06:45:00.000Z",
-    jumlahBab: 4,
-    catatan: "Konversi awal dari dokumen DOCX.",
-    current: false,
-  },
-];
+// No seed revision history — versions appear as the admin saves real edits.
+export const MATERI_VERSIONS: MateriVersion[] = [];
 
 /** The material version currently live, or null. */
 export function getCurrentMateriVersion(): MateriVersion | null {
@@ -119,6 +91,8 @@ export function getActiveTrainings(): TrainingModule[] {
   return TRAINING_MODULES.filter((module) => module.aktif);
 }
 
+// Only the real training. Additional trainings are added by the admin; there
+// are no sample/dummy modules.
 export const TRAINING_MODULES: TrainingModule[] = [
   {
     id: "jsa-hiradc",
@@ -128,23 +102,5 @@ export const TRAINING_MODULES: TrainingModule[] = [
     aktif: true,
     jumlahBab: 6,
     updated: "2026-07-20T04:00:00.000Z",
-  },
-  {
-    id: "p3k-dasar",
-    judul: "Dasar P3K di Tempat Kerja",
-    deskripsi:
-      "Pengenalan pertolongan pertama pada kecelakaan kerja untuk seluruh personel site.",
-    aktif: false,
-    jumlahBab: 4,
-    updated: "2026-07-12T02:30:00.000Z",
-  },
-  {
-    id: "apar-kebakaran",
-    judul: "Penggunaan APAR & Tanggap Kebakaran",
-    deskripsi:
-      "Prosedur penggunaan alat pemadam api ringan dan langkah tanggap darurat kebakaran.",
-    aktif: false,
-    jumlahBab: 3,
-    updated: "2026-07-05T06:15:00.000Z",
   },
 ];
