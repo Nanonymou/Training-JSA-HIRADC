@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -13,9 +13,19 @@ import {
 import { FilePreviewDialog } from "@/components/admin/file-preview-dialog";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
+import { SelectNative } from "@/components/ui/select-native";
 import { useReviews } from "@/hooks/use-reviews";
 import { ADMIN_UPLOADS, type AdminUpload } from "@/lib/admin/latihan";
 import { formatBytes } from "@/lib/upload/config";
+import type { UploadStatus } from "@/lib/upload/types";
+
+const STATUS_FILTERS: (UploadStatus | "all")[] = [
+  "all",
+  "Pending",
+  "Disetujui",
+  "Perlu Revisi",
+  "Ditolak",
+];
 
 function fileIcon(upload: AdminUpload) {
   if (upload.previewKind === "image") return ImageIcon;
@@ -46,12 +56,59 @@ function formatWaktu(iso: string): string {
  */
 export function LatihanReviewList() {
   const [index, setIndex] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<UploadStatus | "all">("all");
   const { reviews } = useReviews();
+
+  // Effective status = saved review, else the mock default.
+  const effectiveStatus = (upload: AdminUpload): UploadStatus =>
+    reviews[upload.id]?.status ?? upload.status;
+
+  const filtered = useMemo(
+    () =>
+      statusFilter === "all"
+        ? ADMIN_UPLOADS
+        : ADMIN_UPLOADS.filter(
+            (upload) => effectiveStatus(upload) === statusFilter,
+          ),
+    // effectiveStatus depends on reviews; recompute when either changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [statusFilter, reviews],
+  );
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-sm">
+          {filtered.length} dari {ADMIN_UPLOADS.length} berkas
+        </p>
+        <div className="flex items-center gap-2">
+          <label htmlFor="status-filter" className="text-sm font-medium">
+            Status
+          </label>
+          <SelectNative
+            id="status-filter"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as UploadStatus | "all")
+            }
+            className="w-40"
+          >
+            {STATUS_FILTERS.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "Semua status" : option}
+              </option>
+            ))}
+          </SelectNative>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="border-border bg-card text-muted-foreground rounded-xl border px-4 py-12 text-center text-sm">
+          Tidak ada berkas dengan status ini.
+        </div>
+      ) : (
       <ul className="flex flex-col gap-2">
-        {ADMIN_UPLOADS.map((upload, position) => {
+        {filtered.map((upload, position) => {
           const Icon = fileIcon(upload);
           return (
             <li
@@ -78,9 +135,7 @@ export function LatihanReviewList() {
               </button>
 
               <div className="flex items-center gap-2 sm:shrink-0">
-                <StatusBadge
-                  status={reviews[upload.id]?.status ?? upload.status}
-                />
+                <StatusBadge status={effectiveStatus(upload)} />
                 <Button
                   variant="outline"
                   size="sm"
@@ -100,9 +155,10 @@ export function LatihanReviewList() {
           );
         })}
       </ul>
+      )}
 
       <FilePreviewDialog
-        uploads={ADMIN_UPLOADS}
+        uploads={filtered}
         index={index}
         onIndexChange={setIndex}
       />
