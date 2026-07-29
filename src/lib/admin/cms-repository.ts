@@ -39,6 +39,37 @@ export async function getMateriVersions(
   }));
 }
 
+/**
+ * Make a version the current (live) one for its training.
+ *
+ * Unsets `is_current` on the training's other versions, then sets it on this one,
+ * so exactly one is live and the peserta material follows it automatically.
+ * Returns false when the version doesn't exist. With no database it's a no-op
+ * over the seed (returns whether the id is known).
+ */
+export async function setCurrentVersion(versionId: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) {
+    return MATERI_VERSIONS.some((v) => v.id === versionId);
+  }
+
+  const [row] = await db
+    .select({ trainingId: materiVersions.trainingId })
+    .from(materiVersions)
+    .where(eq(materiVersions.id, versionId));
+  if (!row) return false;
+
+  await db
+    .update(materiVersions)
+    .set({ isCurrent: false })
+    .where(eq(materiVersions.trainingId, row.trainingId));
+  await db
+    .update(materiVersions)
+    .set({ isCurrent: true })
+    .where(eq(materiVersions.id, versionId));
+  return true;
+}
+
 /** The chapters of a specific version (title + section headings), or null. */
 export async function getMateriVersionPreview(
   versionId: string,
