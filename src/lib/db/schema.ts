@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -115,8 +116,82 @@ export const uploads = pgTable("uploads", {
     .defaultNow(),
 });
 
+/**
+ * Training topics (PRD: TRAININGS) for the multi-training CMS.
+ */
+export const trainings = pgTable("trainings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  judul: text("judul").notNull(),
+  deskripsi: text("deskripsi").notNull().default(""),
+  aktif: boolean("aktif").notNull().default(false),
+  archived: boolean("archived").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * A saved revision of a training's material (version history).
+ *
+ * Each converted DOCX / edit is a version; exactly one per training is `current`.
+ */
+export const materiVersions = pgTable("materi_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: uuid("training_id")
+    .notNull()
+    .references(() => trainings.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  catatan: text("catatan").notNull().default(""),
+  updatedBy: text("updated_by"),
+  isCurrent: boolean("is_current").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * A chapter of a material version. The sections (headings + variant + content)
+ * are stored as JSON since their shape is nested and read as a unit.
+ */
+export const materiChapters = pgTable("materi_chapters", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  versionId: uuid("version_id")
+    .notNull()
+    .references(() => materiVersions.id, { onDelete: "cascade" }),
+  position: integer("position").notNull().default(0),
+  title: text("title").notNull(),
+  summary: text("summary").notNull().default(""),
+  minutes: integer("minutes").notNull().default(0),
+  sections: jsonb("sections").$type<unknown[]>().notNull().default([]),
+});
+
 export const questionsRelations = relations(questions, ({ many }) => ({
   options: many(questionOptions),
+}));
+
+export const trainingsRelations = relations(trainings, ({ many }) => ({
+  versions: many(materiVersions),
+}));
+
+export const materiVersionsRelations = relations(
+  materiVersions,
+  ({ one, many }) => ({
+    training: one(trainings, {
+      fields: [materiVersions.trainingId],
+      references: [trainings.id],
+    }),
+    chapters: many(materiChapters),
+  }),
+);
+
+export const materiChaptersRelations = relations(materiChapters, ({ one }) => ({
+  version: one(materiVersions, {
+    fields: [materiChapters.versionId],
+    references: [materiVersions.id],
+  }),
 }));
 
 export const questionOptionsRelations = relations(
@@ -139,3 +214,9 @@ export type UploadRow = typeof uploads.$inferSelect;
 export type NewUploadRow = typeof uploads.$inferInsert;
 export type PesertaRow = typeof peserta.$inferSelect;
 export type NewPesertaRow = typeof peserta.$inferInsert;
+export type TrainingRow = typeof trainings.$inferSelect;
+export type NewTrainingRow = typeof trainings.$inferInsert;
+export type MateriVersionRow = typeof materiVersions.$inferSelect;
+export type NewMateriVersionRow = typeof materiVersions.$inferInsert;
+export type MateriChapterRow = typeof materiChapters.$inferSelect;
+export type NewMateriChapterRow = typeof materiChapters.$inferInsert;
