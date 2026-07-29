@@ -104,6 +104,11 @@ export const CONVERSION_PREVIEW: ConvertedChapter[] = [
   },
 ];
 
+/** The training currently active (shown to peserta), or null if none. */
+export function getActiveTraining(): TrainingModule | null {
+  return TRAINING_MODULES.find((module) => module.aktif) ?? null;
+}
+
 export const TRAINING_MODULES: TrainingModule[] = [
   {
     id: "jsa-hiradc",

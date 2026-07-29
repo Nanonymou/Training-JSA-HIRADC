@@ -3,6 +3,7 @@ import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 
 import { MateriShell } from "@/components/materi/materi-shell";
+import { getActiveTraining } from "@/lib/admin/cms-materi";
 import { getMateriChapters } from "@/lib/materi/repository";
 
 export const metadata: Metadata = {
@@ -22,6 +23,12 @@ export const metadata: Metadata = {
  */
 export default async function MateriPage() {
   const chapters = await getMateriChapters();
+  // The peserta view follows whichever training the CMS has marked active.
+  const training = getActiveTraining();
+  const judul = training?.judul ?? "Penyusunan dan Pengisian JSA & HIRADC";
+  const deskripsi =
+    training?.deskripsi ??
+    "Materi pelatihan interaktif untuk Tim QHSE PT Tiga Persada Benua.";
 
   return (
     <div className="bg-background flex min-h-dvh flex-col">
@@ -44,12 +51,9 @@ export default async function MateriPage() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         <div className="mb-5 flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight">
-            Materi Pelatihan
-          </h1>
+          <h1 className="text-xl font-semibold tracking-tight">{judul}</h1>
           <p className="text-muted-foreground text-sm text-pretty">
-            Penyusunan dan Pengisian JSA &amp; HIRADC — pilih bab di samping
-            untuk mulai belajar.
+            {deskripsi} Pilih bab di samping untuk mulai belajar.
           </p>
         </div>
 
