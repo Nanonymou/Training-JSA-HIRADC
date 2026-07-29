@@ -1,13 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RotateCcw, Search } from "lucide-react";
+import { FileSpreadsheet, FileText, RotateCcw, Search } from "lucide-react";
 
 import { PesertaTable } from "@/components/admin/peserta-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectNative } from "@/components/ui/select-native";
+import { toast } from "@/components/ui/toaster";
 import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
+import {
+  exportPesertaExcel,
+  exportPesertaPdf,
+} from "@/lib/admin/peserta-export";
 import { PESERTA_RECORDS } from "@/lib/admin/peserta";
 
 /**
@@ -43,12 +48,40 @@ export function PesertaExplorer() {
   }, [query, lokasi, from, to]);
 
   const active = query.trim() !== "" || lokasi !== "all" || from !== "" || to !== "";
+  const label = lokasi === "all" ? "semua" : lokasi;
+
+  const [exporting, setExporting] = useState(false);
 
   function reset() {
     setQuery("");
     setLokasi("all");
     setFrom("");
     setTo("");
+  }
+
+  async function runExport(kind: "excel" | "pdf") {
+    if (filtered.length === 0 || exporting) return;
+    setExporting(true);
+    try {
+      if (kind === "excel") {
+        await exportPesertaExcel(filtered, label);
+      } else {
+        await exportPesertaPdf(filtered, label);
+      }
+      toast({
+        title: `Ekspor ${kind === "excel" ? "Excel" : "PDF"} siap`,
+        description: `${filtered.length} peserta (${label}).`,
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: "Gagal mengekspor",
+        description: "Coba lagi.",
+        variant: "error",
+      });
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -124,9 +157,31 @@ export function PesertaExplorer() {
         )}
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        Menampilkan {filtered.length} dari {PESERTA_RECORDS.length} peserta.
-      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-xs">
+          Menampilkan {filtered.length} dari {PESERTA_RECORDS.length} peserta.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runExport("excel")}
+            disabled={exporting || filtered.length === 0}
+          >
+            <FileSpreadsheet />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runExport("pdf")}
+            disabled={exporting || filtered.length === 0}
+          >
+            <FileText />
+            PDF
+          </Button>
+        </div>
+      </div>
 
       <PesertaTable rows={filtered} />
     </div>
