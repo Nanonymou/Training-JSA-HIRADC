@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
-import { PesertaTable } from "@/components/admin/peserta-table";
+import { PesertaExplorer } from "@/components/admin/peserta-explorer";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -46,7 +46,7 @@ export default async function DataPesertaPage() {
           </p>
         </div>
 
-        <PesertaTable />
+        <PesertaExplorer />
       </main>
     </div>
   );
