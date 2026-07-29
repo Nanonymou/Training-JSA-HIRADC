@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { trainings } from "@/lib/db/schema";
@@ -76,6 +76,45 @@ export async function createTraining(
       archived: false,
     })
     .returning();
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    aktif: row.aktif,
+    archived: row.archived,
+    jumlahBab: 0,
+    updated: row.updatedAt.toISOString(),
+  };
+}
+
+export async function updateTraining(
+  id: string,
+  draft: TrainingDraft,
+): Promise<AdminTraining | null> {
+  const db = getDb();
+  const now = new Date();
+
+  if (!db) {
+    return {
+      id,
+      slug: slugify(draft.judul),
+      judul: draft.judul,
+      deskripsi: draft.deskripsi,
+      aktif: false,
+      archived: false,
+      jumlahBab: 0,
+      updated: now.toISOString(),
+    };
+  }
+
+  const [row] = await db
+    .update(trainings)
+    .set({ judul: draft.judul, deskripsi: draft.deskripsi, updatedAt: now })
+    .where(eq(trainings.id, id))
+    .returning();
+  if (!row) return null;
 
   return {
     id: row.id,

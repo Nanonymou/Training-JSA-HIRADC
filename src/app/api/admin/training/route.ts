@@ -4,6 +4,7 @@ import { readAdminSession } from "@/lib/admin/auth";
 import {
   createTraining,
   getAdminTrainings,
+  updateTraining,
 } from "@/lib/admin/training-repository";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,30 @@ export async function POST(request: Request) {
     }
     const training = await createTraining({ judul, deskripsi });
     return NextResponse.json({ training }, { status: 201 });
+  }
+
+  if (action === "update") {
+    const id = typeof source.id === "string" ? source.id : "";
+    const judul = typeof source.judul === "string" ? source.judul.trim() : "";
+    const deskripsi =
+      typeof source.deskripsi === "string" ? source.deskripsi.trim() : "";
+    if (!id) {
+      return NextResponse.json({ error: "id wajib diisi." }, { status: 400 });
+    }
+    if (!judul) {
+      return NextResponse.json(
+        { error: "Judul wajib diisi." },
+        { status: 400 },
+      );
+    }
+    const training = await updateTraining(id, { judul, deskripsi });
+    if (!training) {
+      return NextResponse.json(
+        { error: "Training tidak ditemukan." },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({ training });
   }
 
   return NextResponse.json({ error: "Aksi tidak dikenal." }, { status: 400 });
