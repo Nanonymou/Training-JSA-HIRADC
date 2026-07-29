@@ -169,15 +169,7 @@ export function BankSoalList() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             <SoalForm
               key={editing?.id ?? "new"}
-              initial={
-                editing
-                  ? {
-                      soal: editing.soal,
-                      pilihan: editing.pilihan,
-                      kunci: editing.kunci,
-                    }
-                  : undefined
-              }
+              initial={editing ?? undefined}
               onSubmit={submit}
               onCancel={() => setFormOpen(false)}
               submitLabel={editing ? "Simpan Perubahan" : "Tambah Soal"}
