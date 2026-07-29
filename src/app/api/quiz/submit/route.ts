@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { readPesertaSession } from "@/lib/daftar-hadir/session";
 import {
   gradeSubmission,
   type SubmittedAnswer,
@@ -36,8 +37,18 @@ function parseAnswers(body: unknown): SubmittedAnswer[] | null {
  * Body: { answers: { questionId, optionId }[] }. Grading is done server-side by
  * option id against the stored bank, returning the score and pass/fail. The
  * client is never trusted to say what's correct.
+ *
+ * Gated: requires a signed Daftar Hadir (peserta session).
  */
 export async function POST(request: Request) {
+  const peserta = await readPesertaSession();
+  if (!peserta) {
+    return NextResponse.json(
+      { error: "Akses quiz terkunci. Isi daftar hadir dulu." },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
