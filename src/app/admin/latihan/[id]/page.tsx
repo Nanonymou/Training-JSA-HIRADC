@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { FilePreview } from "@/components/admin/file-preview";
+import { ReviewPanel } from "@/components/admin/review-panel";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { readAdminSession } from "@/lib/admin/auth";
 import { getAdminUpload } from "@/lib/admin/latihan";
@@ -91,12 +92,15 @@ export default async function UploadDetailPage({
           </dl>
         </div>
 
-        <div className="h-[70dvh]">
-          <FilePreview
-            url={upload.url}
-            fileName={upload.fileName}
-            previewKind={upload.previewKind}
-          />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem]">
+          <div className="h-[70dvh]">
+            <FilePreview
+              url={upload.url}
+              fileName={upload.fileName}
+              previewKind={upload.previewKind}
+            />
+          </div>
+          <ReviewPanel uploadId={upload.id} initialStatus={upload.status} />
         </div>
       </main>
     </div>
