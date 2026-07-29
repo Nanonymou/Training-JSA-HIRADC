@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileUp, GraduationCap, MapPin, type LucideIcon } from "lucide-react";
 
+import { LaporanKelulusan } from "@/components/admin/laporan-kelulusan";
 import { cn } from "@/lib/utils";
 
 type TabId = "kelulusan" | "pengumpulan" | "lokasi";
@@ -63,11 +64,14 @@ export function LaporanTabs() {
           aria-labelledby={`tab-${tab.id}`}
           hidden={tab.id !== active}
         >
-          {tab.id === active && (
-            <div className="bg-card border-border text-muted-foreground rounded-xl border px-4 py-16 text-center text-sm">
-              Laporan {tab.label.toLowerCase()} akan tampil di sini.
-            </div>
-          )}
+          {tab.id === active &&
+            (tab.id === "kelulusan" ? (
+              <LaporanKelulusan />
+            ) : (
+              <div className="bg-card border-border text-muted-foreground rounded-xl border px-4 py-16 text-center text-sm">
+                Laporan {tab.label.toLowerCase()} akan tampil di sini.
+              </div>
+            ))}
         </div>
       ))}
     </div>
