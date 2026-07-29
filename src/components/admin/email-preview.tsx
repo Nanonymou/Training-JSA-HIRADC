@@ -1,10 +1,15 @@
 "use client";
 
-import { Mail } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Loader2, Mail, Send } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 import { buildReviewEmail, shouldNotify } from "@/lib/admin/email-template";
 import { useReviews } from "@/hooks/use-reviews";
 import type { UploadStatus } from "@/lib/upload/types";
+
+type SendState = "idle" | "sending" | "sent" | "error";
 
 /**
  * Preview of the email the peserta will receive (mock).
@@ -30,13 +35,41 @@ export function EmailPreview({
   const comment = review?.comment ?? "";
   const email = buildReviewEmail(pesertaNama, status, comment);
 
+  const [send, setSend] = useState<SendState>("idle");
+
+  async function sendEmail() {
+    setSend("sending");
+    // Simulate the send until the email API lands in the backend phase.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setSend("sent");
+    toast({
+      title: "Email terkirim",
+      description: pesertaEmail,
+      variant: "success",
+    });
+  }
+
   return (
     <div className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4">
-      <div className="flex items-center gap-2">
-        <Mail className="text-muted-foreground size-4" />
-        <p className="text-sm font-semibold tracking-tight">
-          Pratinjau Notifikasi Email
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Mail className="text-muted-foreground size-4" />
+          <p className="text-sm font-semibold tracking-tight">
+            Pratinjau Notifikasi Email
+          </p>
+        </div>
+        {send === "sending" && (
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+            <Loader2 className="size-3.5 animate-spin" />
+            Mengirim…
+          </span>
+        )}
+        {send === "sent" && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="size-3.5" />
+            Terkirim
+          </span>
+        )}
       </div>
 
       {shouldNotify(status) ? (
@@ -57,6 +90,20 @@ export function EmailPreview({
                 {line}
               </p>
             ))}
+            <div className="pt-1">
+              <Button
+                size="sm"
+                onClick={sendEmail}
+                disabled={send === "sending"}
+              >
+                {send === "sending" ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Send />
+                )}
+                {send === "sent" ? "Kirim Ulang" : "Kirim Email"}
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
