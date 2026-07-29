@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { EmailPreview } from "@/components/admin/email-preview";
 import { FilePreview } from "@/components/admin/file-preview";
 import { ReviewPanel } from "@/components/admin/review-panel";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -100,7 +101,15 @@ export default async function UploadDetailPage({
               previewKind={upload.previewKind}
             />
           </div>
-          <ReviewPanel uploadId={upload.id} initialStatus={upload.status} />
+          <div className="flex flex-col gap-4">
+            <ReviewPanel uploadId={upload.id} initialStatus={upload.status} />
+            <EmailPreview
+              uploadId={upload.id}
+              pesertaNama={upload.pesertaNama}
+              pesertaEmail={upload.pesertaEmail}
+              fallbackStatus={upload.status}
+            />
+          </div>
         </div>
       </main>
     </div>
