@@ -7,12 +7,12 @@ import {
   FileBarChart,
   FileCheck2,
   Layers,
-  LayoutDashboard,
   ListChecks,
   Users,
 } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -33,16 +33,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card border-border flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
-          <LayoutDashboard className="size-4.5" />
-        </span>
+      <header className="bg-card/80 border-border sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
+        <BrandLogo className="size-8" />
         <span className="text-sm font-semibold tracking-tight">
           Admin — Training JSA &amp; HIRADC
         </span>
         <div className="ml-auto">
           <AdminLogoutButton />
         </div>
+        <span className="tpb-bar absolute inset-x-0 bottom-0 h-0.5" />
       </header>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">

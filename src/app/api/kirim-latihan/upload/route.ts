@@ -48,18 +48,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: invalid }, { status: 400 });
   }
 
-  const stored = await storeUploadFile(file);
-  const upload = await saveUpload({
-    trainingId: DEFAULT_TRAINING_ID,
-    pesertaNama: peserta.nama,
-    pesertaEmail: peserta.email,
-    lokasi: peserta.lokasi,
-    fileName: file.name,
-    fileSize: file.size,
-    fileExt: getExtension(file.name),
-    urlBerkas: stored.url,
-    status: "Pending",
-  });
+  try {
+    const stored = await storeUploadFile(file);
+    const upload = await saveUpload({
+      trainingId: DEFAULT_TRAINING_ID,
+      pesertaNama: peserta.nama,
+      pesertaEmail: peserta.email,
+      lokasi: peserta.lokasi,
+      fileName: file.name,
+      fileSize: file.size,
+      fileExt: getExtension(file.name),
+      urlBerkas: stored.url,
+      status: "Pending",
+    });
 
-  return NextResponse.json({ upload }, { status: 201 });
+    return NextResponse.json({ upload }, { status: 201 });
+  } catch (error) {
+    // Surface a readable reason instead of a bare 500 HTML page. The most common
+    // causes are storage misconfig (Blob token) or the DB not being migrated.
+    console.error("[kirim-latihan] upload failed:", error);
+    return NextResponse.json(
+      {
+        error:
+          "Gagal menyimpan berkas di server. Pastikan penyimpanan & database sudah dikonfigurasi.",
+      },
+      { status: 500 },
+    );
+  }
 }

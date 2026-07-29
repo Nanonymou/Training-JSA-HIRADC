@@ -4,12 +4,12 @@ import {
   BookOpen,
   ClipboardList,
   ListChecks,
-  ShieldCheck,
   Upload,
   UserCog,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { TrainingSelector } from "@/components/training-selector";
 import { Button } from "@/components/ui/button";
 import { getActiveTrainings } from "@/lib/admin/cms-materi";
@@ -61,19 +61,21 @@ export default function Home() {
   const trainings = getActiveTrainings();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center gap-8 px-6 py-16 text-center">
-      <span className="bg-primary text-primary-foreground flex size-14 items-center justify-center rounded-2xl">
-        <ShieldCheck className="size-7" />
-      </span>
+    <main className="tpb-aurora mx-auto flex min-h-dvh w-full flex-col items-center gap-8 px-6 py-16 text-center">
+      <BrandLogo className="size-20 drop-shadow-sm" />
 
       <div className="flex max-w-2xl flex-col gap-4">
+        <p className="text-muted-foreground text-xs font-semibold tracking-[0.2em] uppercase">
+          PT Tiga Persada Benua
+        </p>
         <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Training Penyusunan dan Pengisian JSA &amp; HIRADC
+          Training Penyusunan dan Pengisian{" "}
+          <span className="text-tpb-gradient">JSA &amp; HIRADC</span>
         </h1>
         <p className="text-muted-foreground text-base text-pretty sm:text-lg">
-          PT Tiga Persada Benua — Catering and Associated Service. Portal
-          pelatihan interaktif untuk Tim QHSE: pelajari konsep, penyusunan, dan
-          pengisian dokumen JSA &amp; HIRADC sesuai standar perusahaan.
+          Catering and Associated Service. Portal pelatihan interaktif untuk Tim
+          QHSE: pelajari konsep, penyusunan, dan pengisian dokumen JSA &amp;
+          HIRADC sesuai standar perusahaan.
         </p>
       </div>
 
@@ -85,14 +87,14 @@ export default function Home() {
       </Button>
 
       {/* Every peserta feature, one click away. */}
-      <div className="grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2">
+      <div className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
         {PESERTA_MENU.map(({ href, title, desc, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="bg-card border-border hover:border-primary/40 flex items-start gap-3 rounded-xl border p-4 transition-colors"
+            className="glass hover:border-primary/50 hover:tpb-glow group flex items-start gap-3 rounded-xl p-4 transition-all"
           >
-            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <span className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors">
               <Icon className="size-5" />
             </span>
             <div>
