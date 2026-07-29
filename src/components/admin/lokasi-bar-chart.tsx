@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { getLokasiStats } from "@/lib/admin/dashboard";
@@ -12,8 +13,8 @@ import { cn } from "@/lib/utils";
  * One series (jumlah peserta), so one hue (the brand primary) and no legend; the
  * heading names the measure. Bars are baseline-anchored with rounded ends and
  * grow in on mount (respecting reduced motion). Each row is directly labelled
- * with the count and a lulus/upload breakdown, so the small dataset needs no
- * hover tooltip to be read. Runs on the mock aggregates.
+ * with the count, and hovering a bar reveals a tooltip with the lulus/upload
+ * breakdown and pass rate. Runs on the mock aggregates.
  */
 export function LokasiBarChart({
   activeLokasi = LOKASI_ALL,
@@ -21,6 +22,7 @@ export function LokasiBarChart({
   activeLokasi?: string;
 }) {
   const reduceMotion = useReducedMotion();
+  const [hover, setHover] = useState<string | null>(null);
   const stats = getLokasiStats();
   const max = Math.max(1, ...stats.map((s) => s.peserta));
   const hasFocus = activeLokasi !== LOKASI_ALL;
@@ -40,11 +42,17 @@ export function LokasiBarChart({
         {stats.map((stat) => {
           const ratio = stat.peserta / max;
           const dimmed = hasFocus && stat.lokasi !== activeLokasi;
+          const rate =
+            stat.peserta === 0
+              ? 0
+              : Math.round((stat.lulus / stat.peserta) * 100);
           return (
             <li
               key={stat.lokasi}
+              onMouseEnter={() => setHover(stat.lokasi)}
+              onMouseLeave={() => setHover((cur) => (cur === stat.lokasi ? null : cur))}
               className={cn(
-                "flex flex-col gap-1 transition-opacity",
+                "relative flex flex-col gap-1 transition-opacity",
                 dimmed && "opacity-40",
               )}
             >
@@ -67,6 +75,16 @@ export function LokasiBarChart({
               <p className="text-muted-foreground text-xs">
                 {stat.lulus} lulus · {stat.upload} upload
               </p>
+
+              {hover === stat.lokasi && (
+                <div className="bg-popover border-border pointer-events-none absolute top-0 right-0 z-10 -translate-y-full rounded-md border px-2.5 py-1.5 text-xs shadow-md">
+                  <p className="font-medium">{stat.lokasi}</p>
+                  <p className="text-muted-foreground tabular-nums">
+                    {stat.peserta} peserta · {stat.lulus} lulus ({rate}%) ·{" "}
+                    {stat.upload} upload
+                  </p>
+                </div>
+              )}
             </li>
           );
         })}
