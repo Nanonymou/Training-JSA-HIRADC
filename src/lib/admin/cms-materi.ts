@@ -60,6 +60,11 @@ export const MATERI_VERSIONS: MateriVersion[] = [
   },
 ];
 
+/** The material version currently live, or null. */
+export function getCurrentMateriVersion(): MateriVersion | null {
+  return MATERI_VERSIONS.find((version) => version.current) ?? null;
+}
+
 /** A chapter produced by converting a DOCX — title plus its section headings. */
 export interface ConvertedChapter {
   id: string;

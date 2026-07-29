@@ -3,8 +3,21 @@ import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 
 import { MateriShell } from "@/components/materi/materi-shell";
-import { getActiveTraining } from "@/lib/admin/cms-materi";
+import {
+  getActiveTraining,
+  getCurrentMateriVersion,
+} from "@/lib/admin/cms-materi";
 import { getMateriChapters } from "@/lib/materi/repository";
+
+function formatTanggal(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(
+      new Date(iso),
+    );
+  } catch {
+    return iso;
+  }
+}
 
 export const metadata: Metadata = {
   title: "Materi Pelatihan — Training JSA & HIRADC",
@@ -29,6 +42,7 @@ export default async function MateriPage() {
   const deskripsi =
     training?.deskripsi ??
     "Materi pelatihan interaktif untuk Tim QHSE PT Tiga Persada Benua.";
+  const version = getCurrentMateriVersion();
 
   return (
     <div className="bg-background flex min-h-dvh flex-col">
@@ -50,11 +64,23 @@ export default async function MateriPage() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
-        <div className="mb-5 flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight">{judul}</h1>
+        <div className="mb-5 flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight">{judul}</h1>
+            {version && (
+              <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                Versi {version.version}
+              </span>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm text-pretty">
             {deskripsi} Pilih bab di samping untuk mulai belajar.
           </p>
+          {version && (
+            <p className="text-muted-foreground text-xs">
+              Materi diperbarui {formatTanggal(version.updatedAt)}.
+            </p>
+          )}
         </div>
 
         <MateriShell chapters={chapters} />
