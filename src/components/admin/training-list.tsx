@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpen, Layers, Pencil, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Archive,
+  ArchiveRestore,
+  BookOpen,
+  Layers,
+  Pencil,
+  Plus,
+} from "lucide-react";
 
 import { TrainingForm, type TrainingDraft } from "@/components/admin/training-form";
 import { Button } from "@/components/ui/button";
@@ -21,6 +28,7 @@ interface TrainingItem {
   deskripsi: string;
   aktif: boolean;
   jumlahBab: number;
+  archived: boolean;
 }
 
 /**
@@ -38,6 +46,7 @@ export function TrainingList() {
       deskripsi: m.deskripsi,
       aktif: m.aktif,
       jumlahBab: m.jumlahBab,
+      archived: false,
     })),
   );
 
@@ -80,6 +89,7 @@ export function TrainingList() {
           deskripsi: draft.deskripsi || "Belum ada deskripsi.",
           aktif: false,
           jumlahBab: 0,
+          archived: false,
         },
         ...current,
       ]);
@@ -101,11 +111,37 @@ export function TrainingList() {
     });
   }
 
+  function archive(item: TrainingItem) {
+    setItems((current) =>
+      current.map((i) =>
+        i.id === item.id ? { ...i, archived: true, aktif: false } : i,
+      ),
+    );
+    toast({ title: "Training diarsipkan", description: item.judul, variant: "info" });
+  }
+
+  function restore(item: TrainingItem) {
+    setItems((current) =>
+      current.map((i) => (i.id === item.id ? { ...i, archived: false } : i)),
+    );
+    toast({ title: "Training dipulihkan", description: item.judul, variant: "success" });
+  }
+
+  const activeItems = useMemo(
+    () => items.filter((i) => !i.archived),
+    [items],
+  );
+  const archivedItems = useMemo(
+    () => items.filter((i) => i.archived),
+    [items],
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">
-          {items.filter((i) => i.aktif).length} aktif dari {items.length} training
+          {activeItems.filter((i) => i.aktif).length} aktif dari{" "}
+          {activeItems.length} training
         </p>
         <Button size="sm" onClick={openAdd}>
           <Plus />
@@ -114,7 +150,7 @@ export function TrainingList() {
       </div>
 
       <ul className="flex flex-col gap-3">
-        {items.map((item) => (
+        {activeItems.map((item) => (
           <li
             key={item.id}
             className="bg-card border-border flex items-start gap-3 rounded-xl border p-4"
@@ -141,6 +177,14 @@ export function TrainingList() {
               >
                 <Pencil />
               </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Arsipkan ${item.judul}`}
+                onClick={() => archive(item)}
+              >
+                <Archive />
+              </Button>
               <label className="flex flex-col items-center gap-1">
                 <Switch
                   checked={item.aktif}
@@ -155,6 +199,34 @@ export function TrainingList() {
           </li>
         ))}
       </ul>
+
+      {archivedItems.length > 0 && (
+        <div className="mt-2 flex flex-col gap-2">
+          <p className="text-muted-foreground text-xs font-medium">
+            Diarsipkan ({archivedItems.length})
+          </p>
+          <ul className="flex flex-col gap-2">
+            {archivedItems.map((item) => (
+              <li
+                key={item.id}
+                className="border-border flex items-center gap-3 rounded-xl border border-dashed p-3"
+              >
+                <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">
+                  {item.judul}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => restore(item)}
+                >
+                  <ArchiveRestore />
+                  Pulihkan
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
