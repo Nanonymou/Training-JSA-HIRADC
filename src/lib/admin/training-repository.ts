@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { trainings } from "@/lib/db/schema";
+import { ensureSeeded } from "@/lib/db/seed";
 import { TRAINING_MODULES, type TrainingModule } from "@/lib/admin/cms-materi";
 
 /**
@@ -34,6 +35,8 @@ export async function getActiveTrainingModules(): Promise<TrainingModule[]> {
   if (!db) {
     return TRAINING_MODULES.filter((m) => m.aktif);
   }
+
+  await ensureSeeded();
 
   const rows = await db
     .select()
@@ -155,6 +158,46 @@ export async function updateTraining(
   };
 }
 
+/** Activate or deactivate a training. Returns the updated row, or null. */
+export async function setTrainingActive(
+  id: string,
+  aktif: boolean,
+): Promise<AdminTraining | null> {
+  const db = getDb();
+  const now = new Date();
+
+  if (!db) {
+    return {
+      id,
+      slug: id,
+      judul: "",
+      deskripsi: "",
+      aktif,
+      archived: false,
+      jumlahBab: 0,
+      updated: now.toISOString(),
+    };
+  }
+
+  const [row] = await db
+    .update(trainings)
+    .set({ aktif, updatedAt: now })
+    .where(eq(trainings.id, id))
+    .returning();
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    aktif: row.aktif,
+    archived: row.archived,
+    jumlahBab: 0,
+    updated: row.updatedAt.toISOString(),
+  };
+}
+
 /**
  * Archive or restore a training. Archiving also deactivates it so it can't be
  * live while archived. Returns the updated row, or null if none matched.
@@ -217,6 +260,8 @@ export async function getAdminTrainings(): Promise<AdminTraining[]> {
       updated: m.updated,
     }));
   }
+
+  await ensureSeeded();
 
   const rows = await db
     .select()

@@ -4,6 +4,7 @@ import { readAdminSession } from "@/lib/admin/auth";
 import {
   createTraining,
   getAdminTrainings,
+  setTrainingActive,
   setTrainingArchived,
   updateTraining,
 } from "@/lib/admin/training-repository";
@@ -74,6 +75,22 @@ export async function POST(request: Request) {
       );
     }
     const training = await updateTraining(id, { judul, deskripsi });
+    if (!training) {
+      return NextResponse.json(
+        { error: "Training tidak ditemukan." },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({ training });
+  }
+
+  if (action === "toggle") {
+    const id = typeof source.id === "string" ? source.id : "";
+    const aktif = source.aktif === true;
+    if (!id) {
+      return NextResponse.json({ error: "id wajib diisi." }, { status: 400 });
+    }
+    const training = await setTrainingActive(id, aktif);
     if (!training) {
       return NextResponse.json(
         { error: "Training tidak ditemukan." },

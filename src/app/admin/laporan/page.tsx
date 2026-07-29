@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 
 import { LaporanTabs } from "@/components/admin/laporan-tabs";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { getPesertaRecords } from "@/lib/admin/peserta-repository";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
   title: "Laporan — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Admin reports (protected).
@@ -19,6 +22,8 @@ export const metadata: Metadata = {
 export default async function LaporanPage() {
   const session = await readAdminSession();
   if (!session) redirect("/admin/login");
+
+  const records = await getPesertaRecords();
 
   return (
     <div className="app-surface flex min-h-dvh flex-col">
@@ -34,7 +39,7 @@ export default async function LaporanPage() {
           </p>
         </div>
 
-        <LaporanTabs />
+        <LaporanTabs records={records} />
       </main>
     </div>
   );

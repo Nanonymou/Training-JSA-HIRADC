@@ -15,7 +15,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import { SelectNative } from "@/components/ui/select-native";
 import { useReviews } from "@/hooks/use-reviews";
-import { ADMIN_UPLOADS, type AdminUpload } from "@/lib/admin/latihan";
+import type { AdminUpload } from "@/lib/admin/latihan";
 import { formatBytes } from "@/lib/upload/config";
 import type { UploadStatus } from "@/lib/upload/types";
 
@@ -54,32 +54,36 @@ function formatWaktu(iso: string): string {
  * here — the actual inline PDF/image rendering lands in the next task; Office
  * files that can't be shown inline are flagged. Runs on mock data for now.
  */
-export function LatihanReviewList() {
+export function LatihanReviewList({
+  uploads,
+}: {
+  uploads: AdminUpload[];
+}) {
   const [index, setIndex] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<UploadStatus | "all">("all");
   const { reviews } = useReviews();
 
-  // Effective status = saved review, else the mock default.
+  // Effective status = saved review, else the DB-stored status.
   const effectiveStatus = (upload: AdminUpload): UploadStatus =>
     reviews[upload.id]?.status ?? upload.status;
 
   const filtered = useMemo(
     () =>
       statusFilter === "all"
-        ? ADMIN_UPLOADS
-        : ADMIN_UPLOADS.filter(
+        ? uploads
+        : uploads.filter(
             (upload) => effectiveStatus(upload) === statusFilter,
           ),
     // effectiveStatus depends on reviews; recompute when either changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [statusFilter, reviews],
+    [uploads, statusFilter, reviews],
   );
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-muted-foreground text-sm">
-          {filtered.length} dari {ADMIN_UPLOADS.length} berkas
+          {filtered.length} dari {uploads.length} berkas
         </p>
         <div className="flex items-center gap-2">
           <label htmlFor="status-filter" className="text-sm font-medium">

@@ -57,3 +57,32 @@ export async function getReviewUploads(
     previewKind: previewKindFor(row.fileExt),
   }));
 }
+
+/** One upload by id, or null. Server-side; DB with seed fallback. */
+export async function getReviewUploadById(
+  id: string,
+): Promise<AdminUpload | null> {
+  const db = getDb();
+  if (!db) return ADMIN_UPLOADS.find((u) => u.id === id) ?? null;
+
+  const [row] = await db
+    .select()
+    .from(uploads)
+    .where(eq(uploads.id, id))
+    .limit(1);
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    pesertaNama: row.pesertaNama,
+    pesertaEmail: row.pesertaEmail,
+    lokasi: row.lokasi ?? "",
+    fileName: row.fileName,
+    fileExt: row.fileExt,
+    fileSize: row.fileSize,
+    url: row.urlBerkas,
+    status: row.status as AdminUpload["status"],
+    waktuUnggah: row.waktuUnggah.toISOString(),
+    previewKind: previewKindFor(row.fileExt),
+  };
+}

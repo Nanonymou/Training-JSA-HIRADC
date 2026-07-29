@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 
 import { DashboardView } from "@/components/admin/dashboard-view";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { getPesertaRecords } from "@/lib/admin/peserta-repository";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
   title: "Dashboard Monitoring — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Admin monitoring dashboard (protected).
@@ -19,6 +22,8 @@ export const metadata: Metadata = {
 export default async function DashboardMonitoringPage() {
   const session = await readAdminSession();
   if (!session) redirect("/admin/login");
+
+  const records = await getPesertaRecords();
 
   return (
     <div className="app-surface flex min-h-dvh flex-col">
@@ -34,7 +39,7 @@ export default async function DashboardMonitoringPage() {
           </p>
         </div>
 
-        <DashboardView />
+        <DashboardView records={records} />
       </main>
     </div>
   );

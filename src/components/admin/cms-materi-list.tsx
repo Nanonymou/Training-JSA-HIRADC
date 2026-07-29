@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { BookOpen, Layers, Pencil, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { TRAINING_MODULES } from "@/lib/admin/cms-materi";
+import type { AdminTraining } from "@/lib/admin/training-repository";
 import { cn } from "@/lib/utils";
 
 function formatUpdated(iso: string): string {
@@ -17,27 +18,36 @@ function formatUpdated(iso: string): string {
 }
 
 /**
- * The CMS list of training modules.
+ * The CMS list of training modules, backed by the trainings table.
  *
- * Each topic shows its title, description, active state, and chapter count with
- * an edit action, plus a toolbar to add a new training. The add form and DOCX
- * upload land in later tasks; this is the layout on mock data.
+ * Each topic shows its title, description, active state, and chapter count.
+ * "Tambah Training" and "Kelola" both route to the multi-training screen where
+ * create/edit/activate are wired to the API and persist to the database.
  */
-export function CmsMateriList() {
+export function CmsMateriList({ items }: { items: AdminTraining[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">
-          {TRAINING_MODULES.length} topik training
+          {items.length} topik training
         </p>
-        <Button size="sm">
-          <Plus />
-          Tambah Training
+        <Button size="sm" asChild>
+          <Link href="/admin/training">
+            <Plus />
+            Tambah Training
+          </Link>
         </Button>
       </div>
 
+      {items.length === 0 && (
+        <p className="border-border text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
+          Belum ada training. Klik &quot;Tambah Training&quot; untuk membuat topik
+          pertama.
+        </p>
+      )}
+
       <ul className="flex flex-col gap-3">
-        {TRAINING_MODULES.map((module) => (
+        {items.map((module) => (
           <li
             key={module.id}
             className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start"
@@ -61,7 +71,7 @@ export function CmsMateriList() {
                 </span>
               </div>
               <p className="text-muted-foreground mt-0.5 text-sm text-pretty">
-                {module.deskripsi}
+                {module.deskripsi || "Belum ada deskripsi."}
               </p>
               <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
                 <Layers className="size-3.5" />
@@ -69,9 +79,11 @@ export function CmsMateriList() {
               </p>
             </div>
 
-            <Button variant="outline" size="sm" className="sm:shrink-0">
-              <Pencil />
-              Kelola
+            <Button variant="outline" size="sm" className="sm:shrink-0" asChild>
+              <Link href="/admin/training">
+                <Pencil />
+                Kelola
+              </Link>
             </Button>
           </li>
         ))}

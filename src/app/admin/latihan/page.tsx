@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 
 import { LatihanReviewList } from "@/components/admin/latihan-review-list";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { getReviewUploads } from "@/lib/admin/latihan-repository";
 import { readAdminSession } from "@/lib/admin/auth";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Review Latihan — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Admin review of submitted latihan files (protected).
@@ -19,6 +22,8 @@ export const metadata: Metadata = {
 export default async function AdminLatihanPage() {
   const session = await readAdminSession();
   if (!session) redirect("/admin/login");
+
+  const uploads = await getReviewUploads();
 
   return (
     <div className="app-surface flex min-h-dvh flex-col">
@@ -35,7 +40,7 @@ export default async function AdminLatihanPage() {
           </p>
         </div>
 
-        <LatihanReviewList />
+        <LatihanReviewList uploads={uploads} />
       </main>
     </div>
   );

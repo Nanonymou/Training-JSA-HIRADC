@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 
 import { PesertaExplorer } from "@/components/admin/peserta-explorer";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { getPesertaRecords } from "@/lib/admin/peserta-repository";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
   title: "Data Peserta — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Admin Data Peserta screen (protected).
@@ -19,6 +22,8 @@ export const metadata: Metadata = {
 export default async function DataPesertaPage() {
   const session = await readAdminSession();
   if (!session) redirect("/admin/login");
+
+  const records = await getPesertaRecords();
 
   return (
     <div className="app-surface flex min-h-dvh flex-col">
@@ -32,7 +37,7 @@ export default async function DataPesertaPage() {
           </p>
         </div>
 
-        <PesertaExplorer />
+        <PesertaExplorer records={records} />
       </main>
     </div>
   );

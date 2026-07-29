@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 
 import { TrainingList } from "@/components/admin/training-list";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { getAdminTrainings } from "@/lib/admin/training-repository";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
   title: "Training — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Admin multi-training management (protected).
@@ -18,6 +21,8 @@ export const metadata: Metadata = {
 export default async function TrainingPage() {
   const session = await readAdminSession();
   if (!session) redirect("/admin/login");
+
+  const items = await getAdminTrainings();
 
   return (
     <div className="app-surface flex min-h-dvh flex-col">
@@ -34,7 +39,7 @@ export default async function TrainingPage() {
           </p>
         </div>
 
-        <TrainingList />
+        <TrainingList initialItems={items} />
       </main>
     </div>
   );

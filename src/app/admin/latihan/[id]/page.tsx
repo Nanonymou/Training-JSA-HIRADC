@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
-import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminHeader } from "@/components/admin/admin-header";
 import { EmailPreview } from "@/components/admin/email-preview";
 import { FilePreview } from "@/components/admin/file-preview";
 import { ReviewPanel } from "@/components/admin/review-panel";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { readAdminSession } from "@/lib/admin/auth";
-import { getAdminUpload } from "@/lib/admin/latihan";
+import { getReviewUploadById } from "@/lib/admin/latihan-repository";
 import { formatBytes } from "@/lib/upload/config";
 
 export const metadata: Metadata = {
   title: "Detail Unggahan — Admin",
 };
+
+export const dynamic = "force-dynamic";
 
 function formatWaktu(iso: string): string {
   try {
@@ -30,8 +30,8 @@ function formatWaktu(iso: string): string {
 /**
  * Admin detail view for a single latihan submission (protected).
  *
- * Full submitter context, the file preview inline, and current status. Review
- * actions (status change, comment) land in later tasks. Runs on mock data.
+ * Full submitter context, the file preview inline, and review + email panels.
+ * Reads the upload from the database via getReviewUploadById.
  */
 export default async function UploadDetailPage({
   params,
@@ -42,26 +42,12 @@ export default async function UploadDetailPage({
   if (!session) redirect("/admin/login");
 
   const { id } = await params;
-  const upload = getAdminUpload(id);
+  const upload = await getReviewUploadById(id);
   if (!upload) notFound();
 
   return (
-    <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card border-border flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <Link
-          href="/admin/latihan"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
-        >
-          <ArrowLeft className="size-4" />
-          Review Latihan
-        </Link>
-        <span className="text-muted-foreground ml-1 truncate text-sm">
-          / {upload.fileName}
-        </span>
-        <div className="ml-auto">
-          <AdminLogoutButton />
-        </div>
-      </header>
+    <div className="app-surface flex min-h-dvh flex-col">
+      <AdminHeader page={upload.fileName} />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-6 flex flex-col gap-2">

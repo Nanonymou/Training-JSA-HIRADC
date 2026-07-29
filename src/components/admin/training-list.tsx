@@ -20,9 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toaster";
-import { TRAINING_MODULES } from "@/lib/admin/cms-materi";
 
-interface TrainingItem {
+export interface TrainingItem {
   id: string;
   judul: string;
   deskripsi: string;
@@ -31,39 +30,39 @@ interface TrainingItem {
   archived: boolean;
 }
 
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+/** Post a mutation, return the server's updated row (or throw). */
+async function persist(
+  action: string,
+  payload: Record<string, unknown>,
+): Promise<TrainingItem> {
+  const res = await fetch("/api/admin/training", {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ action, ...payload }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = (await res.json()) as { training: TrainingItem };
+  return data.training;
+}
+
 /**
  * The admin multi-training list.
  *
- * Every training topic with an active toggle so more than one training can be
- * offered — activating/deactivating updates the mock state with a toast. Add and
- * the create form land in later tasks.
+ * Server-seeded from the training API; every add/edit/toggle/archive/restore
+ * calls the API and updates from its response, so the list matches the DB and
+ * changes survive a reload. Failures revert the optimistic UI and toast.
  */
-export function TrainingList() {
-  const [items, setItems] = useState<TrainingItem[]>(() =>
-    TRAINING_MODULES.map((m) => ({
-      id: m.id,
-      judul: m.judul,
-      deskripsi: m.deskripsi,
-      aktif: m.aktif,
-      jumlahBab: m.jumlahBab,
-      archived: false,
-    })),
-  );
+export function TrainingList({
+  initialItems,
+}: {
+  initialItems: TrainingItem[];
+}) {
+  const [items, setItems] = useState<TrainingItem[]>(initialItems);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TrainingItem | null>(null);
-
-  // Persist a mutation to the training API (added in the backend phase); the
-  // local state above keeps this working before the endpoint exists.
-  function persist(action: string, payload: Record<string, unknown>) {
-    void fetch("/api/admin/training", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...payload }),
-    }).catch(() => {
-      // Endpoint not available yet — local state already updated.
-    });
-  }
 
   function openAdd() {
     setEditing(null);
@@ -75,11 +74,16 @@ export function TrainingList() {
     setFormOpen(true);
   }
 
-  function submitTraining(draft: TrainingDraft) {
-    if (editing) {
+  async function submitTraining(draft: TrainingDraft) {
+    const target = editing;
+    setFormOpen(false);
+    setEditing(null);
+
+    if (target) {
+      const prev = items;
       setItems((current) =>
         current.map((item) =>
-          item.id === editing.id
+          item.id === target.id
             ? {
                 ...item,
                 judul: draft.judul,
@@ -88,60 +92,81 @@ export function TrainingList() {
             : item,
         ),
       );
-      persist("update", { id: editing.id, ...draft });
-      toast({ title: "Training diperbarui", description: draft.judul, variant: "success" });
-    } else {
-      const id =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}`;
-      setItems((current) => [
-        {
-          id,
+      try {
+        const training = await persist("update", {
+          id: target.id,
           judul: draft.judul,
-          deskripsi: draft.deskripsi || "Belum ada deskripsi.",
-          aktif: false,
-          jumlahBab: 0,
-          archived: false,
-        },
-        ...current,
-      ]);
-      persist("create", { id, ...draft });
-      toast({ title: "Training ditambahkan", description: draft.judul, variant: "success" });
+          deskripsi: draft.deskripsi,
+        });
+        setItems((current) =>
+          current.map((i) =>
+            i.id === target.id ? { ...i, ...training } : i,
+          ),
+        );
+        toast({ title: "Training diperbarui", description: draft.judul, variant: "success" });
+      } catch {
+        setItems(prev);
+        toast({ title: "Gagal memperbarui training", variant: "error" });
+      }
+      return;
     }
-    setFormOpen(false);
-    setEditing(null);
+
+    try {
+      const training = await persist("create", { ...draft });
+      setItems((current) => [{ ...training, jumlahBab: 0 }, ...current]);
+      toast({ title: "Training ditambahkan", description: draft.judul, variant: "success" });
+    } catch {
+      toast({ title: "Gagal menambah training", variant: "error" });
+    }
   }
 
-  function toggle(id: string, aktif: boolean) {
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, aktif } : item)),
-    );
+  async function toggle(id: string, aktif: boolean) {
     const item = items.find((i) => i.id === id);
-    persist("toggle", { id, aktif });
-    toast({
-      title: aktif ? "Training diaktifkan" : "Training dinonaktifkan",
-      description: item?.judul,
-      variant: aktif ? "success" : "info",
-    });
+    const prev = items;
+    setItems((current) =>
+      current.map((i) => (i.id === id ? { ...i, aktif } : i)),
+    );
+    try {
+      await persist("toggle", { id, aktif });
+      toast({
+        title: aktif ? "Training diaktifkan" : "Training dinonaktifkan",
+        description: item?.judul,
+        variant: aktif ? "success" : "info",
+      });
+    } catch {
+      setItems(prev);
+      toast({ title: "Gagal mengubah status", variant: "error" });
+    }
   }
 
-  function archive(item: TrainingItem) {
+  async function archive(item: TrainingItem) {
+    const prev = items;
     setItems((current) =>
       current.map((i) =>
         i.id === item.id ? { ...i, archived: true, aktif: false } : i,
       ),
     );
-    persist("archive", { id: item.id });
-    toast({ title: "Training diarsipkan", description: item.judul, variant: "info" });
+    try {
+      await persist("archive", { id: item.id });
+      toast({ title: "Training diarsipkan", description: item.judul, variant: "info" });
+    } catch {
+      setItems(prev);
+      toast({ title: "Gagal mengarsipkan training", variant: "error" });
+    }
   }
 
-  function restore(item: TrainingItem) {
+  async function restore(item: TrainingItem) {
+    const prev = items;
     setItems((current) =>
       current.map((i) => (i.id === item.id ? { ...i, archived: false } : i)),
     );
-    persist("restore", { id: item.id });
-    toast({ title: "Training dipulihkan", description: item.judul, variant: "success" });
+    try {
+      await persist("restore", { id: item.id });
+      toast({ title: "Training dipulihkan", description: item.judul, variant: "success" });
+    } catch {
+      setItems(prev);
+      toast({ title: "Gagal memulihkan training", variant: "error" });
+    }
   }
 
   const activeItems = useMemo(
