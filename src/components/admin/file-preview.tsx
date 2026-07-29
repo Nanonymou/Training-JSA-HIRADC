@@ -12,7 +12,8 @@ import type { PreviewKind } from "@/lib/admin/latihan";
  * PDFs render in an embedded frame and images in an <img>; anything else (Office
  * docs) can't be shown inline, so it offers a download instead. If an inline
  * render fails to load, it falls back to the same download prompt rather than a
- * broken frame. A download / open-in-new-tab link is always available.
+ * broken frame. The preview fills its container (`h-full`) so the modal can size
+ * it to the viewport; a download / open-in-new-tab link is always available.
  */
 export function FilePreview({
   url,
@@ -26,7 +27,13 @@ export function FilePreview({
   const [failed, setFailed] = useState(false);
 
   const downloadable = (
-    <a href={url} download={fileName} target="_blank" rel="noreferrer">
+    <a
+      href={url}
+      download={fileName}
+      target="_blank"
+      rel="noreferrer"
+      className="shrink-0"
+    >
       <Button variant="outline" size="sm">
         <Download />
         Unduh berkas
@@ -36,7 +43,7 @@ export function FilePreview({
 
   if (previewKind === "unsupported" || failed) {
     return (
-      <div className="bg-muted/40 flex min-h-64 flex-col items-center justify-center gap-3 rounded-lg p-6 text-center">
+      <div className="bg-muted/40 flex h-full min-h-52 flex-col items-center justify-center gap-3 rounded-lg p-6 text-center">
         <FileWarning className="text-muted-foreground size-8" />
         <p className="text-muted-foreground text-sm text-pretty">
           {failed
@@ -50,27 +57,27 @@ export function FilePreview({
 
   if (previewKind === "image") {
     return (
-      <div className="flex flex-col items-center gap-3">
-        <div className="bg-muted/40 flex max-h-[70dvh] w-full items-center justify-center overflow-auto rounded-lg p-2">
+      <div className="flex h-full min-h-0 flex-col gap-3">
+        <div className="bg-muted/40 flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-lg p-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt={`Pratinjau ${fileName}`}
-            className="max-h-[66dvh] max-w-full rounded object-contain"
+            className="max-h-full max-w-full rounded object-contain"
             onError={() => setFailed(true)}
           />
         </div>
-        {downloadable}
+        <div className="flex justify-center">{downloadable}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <object
         data={url}
         type="application/pdf"
-        className="bg-muted/40 h-[70dvh] w-full rounded-lg"
+        className="bg-muted/40 min-h-0 w-full flex-1 rounded-lg"
         aria-label={`Pratinjau ${fileName}`}
       >
         <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
@@ -81,7 +88,7 @@ export function FilePreview({
           {downloadable}
         </div>
       </object>
-      {downloadable}
+      <div className="flex justify-center">{downloadable}</div>
     </div>
   );
 }

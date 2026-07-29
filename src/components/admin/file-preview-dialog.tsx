@@ -44,7 +44,7 @@ export function FilePreviewDialog({
       <DialogContent className="max-w-3xl">
         {upload && index !== null && (
           <>
-            <DialogHeader>
+            <DialogHeader className="shrink-0">
               <div className="flex items-center gap-2">
                 <DialogTitle className="min-w-0 flex-1 truncate">
                   {upload.fileName}
@@ -57,14 +57,18 @@ export function FilePreviewDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <FilePreview
-              key={upload.id}
-              url={upload.url}
-              fileName={upload.fileName}
-              previewKind={upload.previewKind}
-            />
+            {/* Fills the space between header and footer; the preview sizes to it
+                and scrolls internally on short screens. */}
+            <div className="min-h-0 flex-1">
+              <FilePreview
+                key={upload.id}
+                url={upload.url}
+                fileName={upload.fileName}
+                previewKind={upload.previewKind}
+              />
+            </div>
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex shrink-0 items-center justify-between gap-3">
               <Button
                 variant="outline"
                 size="sm"
