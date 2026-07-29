@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, FileSpreadsheet, FileText, Image as ImageIcon } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowUpRight,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Image as ImageIcon,
+} from "lucide-react";
 
 import { FilePreviewDialog } from "@/components/admin/file-preview-dialog";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -77,6 +84,12 @@ export function LatihanReviewList() {
                 >
                   <Eye />
                   Pratinjau
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={`/admin/latihan/${upload.id}`}>
+                    Detail
+                    <ArrowUpRight />
+                  </Link>
                 </Button>
               </div>
             </li>

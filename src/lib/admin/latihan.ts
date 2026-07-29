@@ -24,6 +24,11 @@ export interface AdminUpload {
   previewKind: PreviewKind;
 }
 
+/** Find one upload by id, or null. */
+export function getAdminUpload(id: string): AdminUpload | null {
+  return ADMIN_UPLOADS.find((upload) => upload.id === id) ?? null;
+}
+
 export const ADMIN_UPLOADS: AdminUpload[] = [
   {
     id: "u-001",
