@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Save } from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/status-badge";
+import { Button } from "@/components/ui/button";
 import { SelectNative } from "@/components/ui/select-native";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toaster";
 import type { UploadStatus } from "@/lib/upload/types";
 
@@ -15,25 +18,27 @@ const STATUS_OPTIONS: UploadStatus[] = [
 ];
 
 /**
- * Review controls for a submission — the status dropdown for now.
+ * Review controls for a submission: status and an admin comment.
  *
- * Holds the review status locally (seeded from the upload) and reflects changes
- * immediately with a badge and a toast, ahead of a real API. The comment field
- * and save/notify land in later tasks.
+ * Holds the status and comment locally (seeded from the upload) and saves them
+ * together with a toast, ahead of a real API. The badge tracks the selected
+ * status; save/notify wiring lands later.
  */
 export function ReviewPanel({
   initialStatus,
+  initialComment = "",
 }: {
   uploadId: string;
   initialStatus: UploadStatus;
+  initialComment?: string;
 }) {
   const [status, setStatus] = useState<UploadStatus>(initialStatus);
+  const [comment, setComment] = useState(initialComment);
 
-  function change(next: UploadStatus) {
-    setStatus(next);
+  function save() {
     toast({
-      title: "Status review diperbarui",
-      description: next,
+      title: "Tinjauan disimpan",
+      description: `Status: ${status}`,
       variant: "success",
     });
   }
@@ -52,7 +57,7 @@ export function ReviewPanel({
         <SelectNative
           id="review-status"
           value={status}
-          onChange={(event) => change(event.target.value as UploadStatus)}
+          onChange={(event) => setStatus(event.target.value as UploadStatus)}
         >
           {STATUS_OPTIONS.map((option) => (
             <option key={option} value={option}>
@@ -61,6 +66,27 @@ export function ReviewPanel({
           ))}
         </SelectNative>
       </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="review-comment" className="text-sm font-medium">
+          Komentar untuk peserta
+        </label>
+        <Textarea
+          id="review-comment"
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          placeholder="mis. Lengkapi kolom pengendalian pada langkah 3…"
+          className="min-h-24"
+        />
+        <p className="text-muted-foreground text-xs">
+          Komentar ini akan dikirim ke peserta saat status diperbarui.
+        </p>
+      </div>
+
+      <Button size="sm" onClick={save} className="self-start">
+        <Save />
+        Simpan Tinjauan
+      </Button>
     </div>
   );
 }
