@@ -2,9 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Layers } from "lucide-react";
+import { BookOpen, Check, Layers } from "lucide-react";
 
 import type { TrainingModule } from "@/lib/admin/cms-materi";
+import { cn } from "@/lib/utils";
+
+const SELECTED_KEY = "training-jsa-hiradc:selected-training:v1";
+
+function readSelected(): string | null {
+  try {
+    return window.localStorage.getItem(SELECTED_KEY);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The peserta training selector.
@@ -19,6 +30,21 @@ export function TrainingSelector({
   initial: TrainingModule[];
 }) {
   const [trainings, setTrainings] = useState<TrainingModule[]>(initial);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  // Read the remembered selection after mount (avoids a hydration mismatch).
+  useEffect(() => {
+    setSelected(readSelected());
+  }, []);
+
+  function select(id: string) {
+    setSelected(id);
+    try {
+      window.localStorage.setItem(SELECTED_KEY, id);
+    } catch {
+      // Ignore — navigation still proceeds.
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -47,10 +73,25 @@ export function TrainingSelector({
           <Link
             key={training.id}
             href="/materi"
-            className="bg-card border-border hover:border-primary/40 flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors"
+            onClick={() => select(training.id)}
+            aria-current={selected === training.id ? "true" : undefined}
+            className={cn(
+              "bg-card flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
+              selected === training.id
+                ? "border-primary"
+                : "border-border hover:border-primary/40",
+            )}
           >
-            <span className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg">
-              <BookOpen className="size-4.5" />
+            <span className="flex items-center justify-between">
+              <span className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg">
+                <BookOpen className="size-4.5" />
+              </span>
+              {selected === training.id && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <Check className="size-3" />
+                  Dipilih
+                </span>
+              )}
             </span>
             <span className="text-sm font-semibold tracking-tight text-pretty">
               {training.judul}
