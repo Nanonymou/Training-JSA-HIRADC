@@ -63,6 +63,53 @@ function recapBySite(rows: PesertaRecord[]): SiteRecap[] {
     .sort((a, b) => b.peserta - a.peserta);
 }
 
+export interface SiteRollup {
+  lokasi: string;
+  peserta: number;
+  lulus: number;
+  belumLulus: number;
+  belumIkut: number;
+  /** Peserta who submitted a latihan file. */
+  terkirim: number;
+  rata: number;
+  /** Pass rate as a whole-number percentage of peserta. */
+  persenLulus: number;
+}
+
+/**
+ * Combined per-site data for the report: attendance, quiz outcomes, and upload
+ * counts rolled up by site over the filtered period. Empty when no rows match.
+ */
+export async function getSiteGabungan(
+  filter: LaporanFilter = {},
+): Promise<SiteRollup[]> {
+  const { rows } = await getLaporanPeriode(filter);
+
+  const map = new Map<string, PesertaRecord[]>();
+  for (const row of rows) {
+    const list = map.get(row.lokasi) ?? [];
+    list.push(row);
+    map.set(row.lokasi, list);
+  }
+
+  return [...map.entries()]
+    .map(([lokasi, list]) => {
+      const lulus = list.filter((r) => r.quizStatus === "Lulus").length;
+      return {
+        lokasi,
+        peserta: list.length,
+        lulus,
+        belumLulus: list.filter((r) => r.quizStatus === "Belum Lulus").length,
+        belumIkut: list.filter((r) => r.quizStatus === "Belum Ikut").length,
+        terkirim: list.filter((r) => r.uploadStatus === "Terkirim").length,
+        rata: averageScore(list),
+        persenLulus:
+          list.length === 0 ? 0 : Math.round((lulus / list.length) * 100),
+      };
+    })
+    .sort((a, b) => b.peserta - a.peserta);
+}
+
 export async function getLaporanPeriode(
   filter: LaporanFilter = {},
 ): Promise<LaporanPeriode> {
