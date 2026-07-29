@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 
 import { DashboardStats } from "@/components/admin/dashboard-stats";
-import { SelectNative } from "@/components/ui/select-native";
+import { LOKASI_ALL, LokasiFilter } from "@/components/admin/lokasi-filter";
 import { getDashboardSummary } from "@/lib/admin/dashboard";
 import { PESERTA_RECORDS } from "@/lib/admin/peserta";
-import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
 
 /**
  * The interactive monitoring dashboard.
@@ -17,11 +16,11 @@ import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
  * presentational.
  */
 export function DashboardView() {
-  const [lokasi, setLokasi] = useState("all");
+  const [lokasi, setLokasi] = useState(LOKASI_ALL);
 
   const rows = useMemo(
     () =>
-      lokasi === "all"
+      lokasi === LOKASI_ALL
         ? PESERTA_RECORDS
         : PESERTA_RECORDS.filter((p) => p.lokasi === lokasi),
     [lokasi],
@@ -31,25 +30,7 @@ export function DashboardView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <label htmlFor="dash-lokasi" className="text-sm font-medium">
-          Lokasi
-        </label>
-        <SelectNative
-          id="dash-lokasi"
-          value={lokasi}
-          onChange={(event) => setLokasi(event.target.value)}
-          className="w-44"
-        >
-          <option value="all">Semua lokasi</option>
-          {LOKASI_OPTIONS.map((site) => (
-            <option key={site} value={site}>
-              {site}
-            </option>
-          ))}
-        </SelectNative>
-      </div>
-
+      <LokasiFilter id="dash-lokasi" value={lokasi} onChange={setLokasi} />
       <DashboardStats summary={summary} />
     </div>
   );
