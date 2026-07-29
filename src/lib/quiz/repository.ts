@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db/client";
 import { shuffle } from "@/lib/quiz/attempt";
+import { QUIZ_CONFIG } from "@/lib/quiz/config";
 import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
 
 /**
@@ -97,4 +98,65 @@ export async function getRandomQuizQuestions(
         label: option.label,
       })),
     }));
+}
+
+/** One submitted answer: the question and the option the peserta chose. */
+export interface SubmittedAnswer {
+  questionId: string;
+  optionId: string;
+}
+
+export interface GradeOutcome {
+  total: number;
+  correct: number;
+  /** Percentage correct, 0–100, rounded. */
+  score: number;
+  lulus: boolean;
+  passingGrade: number;
+}
+
+/**
+ * Grade a submission server-side.
+ *
+ * Correctness is looked up by option id against the stored bank — never trusted
+ * from the client — so a chosen option only counts when it exists, belongs to
+ * the question it's claimed under, and is flagged correct. The denominator is
+ * the number of answers submitted (the runner gates submit until all served
+ * questions are answered).
+ */
+export async function gradeSubmission(
+  answers: SubmittedAnswer[],
+): Promise<GradeOutcome> {
+  const records = await getQuestionRecords();
+
+  const optionsById = new Map<
+    string,
+    { questionId: string; isCorrect: boolean }
+  >();
+  for (const question of records) {
+    for (const option of question.options) {
+      optionsById.set(option.id, {
+        questionId: question.id,
+        isCorrect: option.isCorrect,
+      });
+    }
+  }
+
+  const correct = answers.reduce((sum, answer) => {
+    const option = optionsById.get(answer.optionId);
+    const hit =
+      option?.questionId === answer.questionId && option?.isCorrect === true;
+    return sum + (hit ? 1 : 0);
+  }, 0);
+
+  const total = answers.length;
+  const score = total === 0 ? 0 : Math.round((correct / total) * 100);
+
+  return {
+    total,
+    correct,
+    score,
+    lulus: score >= QUIZ_CONFIG.passingGrade,
+    passingGrade: QUIZ_CONFIG.passingGrade,
+  };
 }
