@@ -1,8 +1,8 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { trainings } from "@/lib/db/schema";
-import { TRAINING_MODULES } from "@/lib/admin/cms-materi";
+import { TRAINING_MODULES, type TrainingModule } from "@/lib/admin/cms-materi";
 
 /**
  * Server-side access to training topics for the multi-training admin screen.
@@ -22,6 +22,33 @@ export interface AdminTraining {
   archived: boolean;
   jumlahBab: number;
   updated: string;
+}
+
+/**
+ * Active (non-archived) trainings for the peserta training selector, in the
+ * TrainingModule shape the selector expects. Reads the trainings table when a
+ * database is configured, otherwise the seed's active modules.
+ */
+export async function getActiveTrainingModules(): Promise<TrainingModule[]> {
+  const db = getDb();
+  if (!db) {
+    return TRAINING_MODULES.filter((m) => m.aktif);
+  }
+
+  const rows = await db
+    .select()
+    .from(trainings)
+    .where(and(eq(trainings.aktif, true), eq(trainings.archived, false)))
+    .orderBy(desc(trainings.updatedAt));
+
+  return rows.map((row) => ({
+    id: row.slug,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    aktif: row.aktif,
+    jumlahBab: 0,
+    updated: row.updatedAt.toISOString(),
+  }));
 }
 
 /** A slug from a title: lowercase, dashes, ascii word chars only. */
