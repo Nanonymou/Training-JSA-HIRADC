@@ -24,6 +24,71 @@ export interface AdminTraining {
   updated: string;
 }
 
+/** A slug from a title: lowercase, dashes, ascii word chars only. */
+export function slugify(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "training"
+  );
+}
+
+function newId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}`;
+}
+
+export interface TrainingDraft {
+  judul: string;
+  deskripsi: string;
+}
+
+export async function createTraining(
+  draft: TrainingDraft,
+): Promise<AdminTraining> {
+  const now = new Date();
+  const slug = slugify(draft.judul);
+  const db = getDb();
+
+  if (!db) {
+    return {
+      id: newId(),
+      slug,
+      judul: draft.judul,
+      deskripsi: draft.deskripsi,
+      aktif: false,
+      archived: false,
+      jumlahBab: 0,
+      updated: now.toISOString(),
+    };
+  }
+
+  const [row] = await db
+    .insert(trainings)
+    .values({
+      slug,
+      judul: draft.judul,
+      deskripsi: draft.deskripsi,
+      aktif: false,
+      archived: false,
+    })
+    .returning();
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    aktif: row.aktif,
+    archived: row.archived,
+    jumlahBab: 0,
+    updated: row.updatedAt.toISOString(),
+  };
+}
+
 export async function getAdminTrainings(): Promise<AdminTraining[]> {
   const db = getDb();
   if (!db) {

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { readAdminSession } from "@/lib/admin/auth";
-import { getAdminTrainings } from "@/lib/admin/training-repository";
+import {
+  createTraining,
+  getAdminTrainings,
+} from "@/lib/admin/training-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -17,4 +20,42 @@ export async function GET() {
 
   const trainings = await getAdminTrainings();
   return NextResponse.json({ trainings });
+}
+
+/**
+ * POST /api/admin/training — mutate trainings. Admin-only. Dispatches on the
+ * body's `action`; `create` adds a new (inactive) training from {judul,
+ * deskripsi}. Other actions land in their own tasks.
+ */
+export async function POST(request: Request) {
+  const admin = await readAdminSession();
+  if (!admin) {
+    return NextResponse.json({ error: "Butuh login admin." }, { status: 403 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Body bukan JSON valid." }, { status: 400 });
+  }
+
+  const source = (body ?? {}) as Record<string, unknown>;
+  const action = typeof source.action === "string" ? source.action : "";
+
+  if (action === "create") {
+    const judul = typeof source.judul === "string" ? source.judul.trim() : "";
+    const deskripsi =
+      typeof source.deskripsi === "string" ? source.deskripsi.trim() : "";
+    if (!judul) {
+      return NextResponse.json(
+        { error: "Judul wajib diisi." },
+        { status: 400 },
+      );
+    }
+    const training = await createTraining({ judul, deskripsi });
+    return NextResponse.json({ training }, { status: 201 });
+  }
+
+  return NextResponse.json({ error: "Aksi tidak dikenal." }, { status: 400 });
 }
