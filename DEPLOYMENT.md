@@ -99,8 +99,16 @@ Setelah menambah/mengubah env, **redeploy**: Deployments → ⋯ → Redeploy.
 
 ## Step 2 — Migrasi ke Postgres produksi
 
-Vercel **tidak** menjalankan migrasi otomatis. Jalankan sekali dari komputer,
-menunjuk ke database produksi.
+**Otomatis (default).** Repo ini menyetel `buildCommand` di `vercel.json` untuk
+menjalankan `scripts/migrate.mjs` sebelum `next build`. Jadi begitu `POSTGRES_URL`
+ter-set (Step 1) dan kamu deploy, migrasi diterapkan sendiri saat build —
+idempotent, jadi aman diulang tiap deploy. Kalau `POSTGRES_URL` belum ada,
+migrasi dilewati dan build tetap jalan (aplikasi memakai data seed).
+
+> Urutannya: **set `POSTGRES_URL` dulu → redeploy.** Migrasi jalan di build itu.
+
+**Manual (opsional — untuk lokal atau kalau ingin menjalankan terpisah).**
+Jalankan dari komputer, menunjuk ke database produksi:
 
 ```bash
 # 1. Clone & install
