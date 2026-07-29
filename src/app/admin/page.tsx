@@ -11,8 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
-import { BrandLogo } from "@/components/brand/brand-logo";
+import { AdminHeader } from "@/components/admin/admin-header";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -32,17 +31,8 @@ export default async function AdminDashboardPage() {
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card/80 border-border sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
-        <BrandLogo className="size-8" />
-        <span className="text-sm font-semibold tracking-tight">
-          Admin — Training JSA &amp; HIRADC
-        </span>
-        <div className="ml-auto">
-          <AdminLogoutButton />
-        </div>
-        <span className="tpb-bar absolute inset-x-0 bottom-0 h-0.5" />
-      </header>
+    <div className="app-surface flex min-h-dvh flex-col">
+      <AdminHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-6 flex flex-col gap-1">

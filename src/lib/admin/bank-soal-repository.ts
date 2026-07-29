@@ -1,9 +1,11 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { questionOptions, questions } from "@/lib/db/schema";
+import { ensureSeeded } from "@/lib/db/seed";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
 import { DEFAULT_CATEGORY } from "@/lib/admin/soal-categories";
+import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
 import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 /**
@@ -22,6 +24,43 @@ function newId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}`;
+}
+
+/**
+ * Every question in the bank as editable records (id, prompt, options, correct
+ * index, category). Reads the seeded database when configured — so the admin
+ * list reflects real saved state and deletes stick — otherwise the seed bank.
+ */
+export async function getSoalRecords(): Promise<SoalRecord[]> {
+  const db = getDb();
+  if (!db) {
+    return QUIZ_QUESTIONS.map((q) => ({
+      id: q.id,
+      soal: q.soal,
+      pilihan: q.pilihan,
+      kunci: q.kunci,
+      kategori: DEFAULT_CATEGORY,
+    }));
+  }
+
+  await ensureSeeded();
+
+  const rows = await db.query.questions.findMany({
+    where: eq(questions.trainingId, DEFAULT_TRAINING_ID),
+    with: { options: true },
+    orderBy: asc(questions.createdAt),
+  });
+
+  return rows.map((row) => {
+    const options = [...row.options].sort((a, b) => a.position - b.position);
+    return {
+      id: row.id,
+      soal: row.soal,
+      pilihan: options.map((o) => o.label),
+      kunci: Math.max(0, options.findIndex((o) => o.isCorrect)),
+      kategori: row.category,
+    };
+  });
 }
 
 export async function createSoal(draft: SoalDraft): Promise<SoalRecord> {

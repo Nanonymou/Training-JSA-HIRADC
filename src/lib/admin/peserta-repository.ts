@@ -1,7 +1,11 @@
 import { eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
-import { peserta as pesertaTable } from "@/lib/db/schema";
+import {
+  peserta as pesertaTable,
+  quizAttempts,
+  uploads,
+} from "@/lib/db/schema";
 import { PESERTA_RECORDS, type PesertaRecord } from "@/lib/admin/peserta";
 import {
   DEFAULT_TRAINING_ID,
@@ -32,21 +36,72 @@ async function fromSource(trainingId: string): Promise<PesertaRecord[]> {
   const db = getDb();
   if (!db) return isDefaultTraining(scope) ? PESERTA_RECORDS : [];
 
-  const rows = await db
-    .select()
-    .from(pesertaTable)
-    .where(eq(pesertaTable.trainingId, scope));
-  return rows.map((row) => ({
-    id: row.id,
-    nama: row.nama,
-    email: row.email,
-    jabatan: row.jabatan,
-    lokasi: row.lokasi,
-    quizStatus: "Belum Ikut",
-    quizScore: null,
-    uploadStatus: "Belum",
-    waktuHadir: row.waktuHadir.toISOString(),
-  }));
+  const [rows, attempts, ups] = await Promise.all([
+    db.select().from(pesertaTable).where(eq(pesertaTable.trainingId, scope)),
+    db.select().from(quizAttempts).where(eq(quizAttempts.trainingId, scope)),
+    db.select().from(uploads).where(eq(uploads.trainingId, scope)),
+  ]);
+
+  // Latest quiz attempt per peserta email (attempts carry no peserta FK — the
+  // Daftar Hadir is a cookie session — so we match on the denormalised email).
+  const latestAttempt = new Map<string, (typeof attempts)[number]>();
+  for (const a of attempts) {
+    const key = a.pesertaEmail.toLowerCase();
+    const prev = latestAttempt.get(key);
+    if (!prev || a.createdAt > prev.createdAt) latestAttempt.set(key, a);
+  }
+  const hasUpload = new Set(ups.map((u) => u.pesertaEmail.toLowerCase()));
+
+  return rows.map((row) => {
+    const attempt = latestAttempt.get(row.email.toLowerCase());
+    return {
+      id: row.id,
+      nama: row.nama,
+      email: row.email,
+      jabatan: row.jabatan,
+      lokasi: row.lokasi,
+      quizStatus: attempt
+        ? attempt.lulus
+          ? "Lulus"
+          : "Belum Lulus"
+        : "Belum Ikut",
+      quizScore: attempt ? attempt.score : null,
+      uploadStatus: hasUpload.has(row.email.toLowerCase())
+        ? "Terkirim"
+        : "Belum",
+      waktuHadir: row.waktuHadir.toISOString(),
+    };
+  });
+}
+
+/**
+ * Record a peserta's attendance in the database (if configured). Attendance is
+ * also a cookie session for the quiz gate, but persisting it here is what makes
+ * the admin's Data Peserta and reports show real registrations.
+ */
+export async function savePeserta(input: {
+  nama: string;
+  email: string;
+  jabatan: string;
+  lokasi: string;
+  departemen?: string;
+  ip?: string;
+  browser?: string;
+  trainingId?: string;
+}): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+
+  await db.insert(pesertaTable).values({
+    trainingId: resolveTrainingId(input.trainingId),
+    nama: input.nama,
+    email: input.email,
+    jabatan: input.jabatan,
+    lokasi: input.lokasi,
+    departemen: input.departemen ?? "QHSE",
+    ip: input.ip,
+    browser: input.browser,
+  });
 }
 
 /** Apply the filter to a set of records. */

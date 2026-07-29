@@ -12,6 +12,7 @@ import {
   validateForm,
   type PesertaFormValues,
 } from "@/lib/daftar-hadir/validation";
+import { savePeserta } from "@/lib/admin/peserta-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,23 @@ export async function POST(request: Request) {
 
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
+  const browser = request.headers.get("user-agent") ?? undefined;
+
+  // Persist attendance so the admin's Data Peserta and reports see it. Best
+  // effort — a storage hiccup must not block the peserta from proceeding.
+  try {
+    await savePeserta({
+      nama: session.nama,
+      email: session.email,
+      jabatan: session.jabatan,
+      lokasi: session.lokasi,
+      departemen: session.departemen,
+      ip,
+      browser,
+    });
+  } catch (error) {
+    console.error("[daftar-hadir] gagal menyimpan peserta:", error);
+  }
 
   const response = NextResponse.json({ peserta: { ...session, ip } });
   response.cookies.set(PESERTA_COOKIE, encodeSession(session), {

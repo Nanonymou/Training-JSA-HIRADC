@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { Home } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
 
 /**
  * Shared top bar for the peserta-facing screens.
  *
- * Carries the TPB brand mark (a link home, so every screen has a way back) and
- * the current page name, with a thin tri-colour accent along the bottom edge.
+ * Carries the TPB brand mark and the current page name, plus an explicit
+ * "Beranda" button on the right so every screen has an obvious way home, with a
+ * thin tri-colour accent along the bottom edge.
  */
 export function PesertaHeader({ page }: { page: string }) {
   return (
@@ -21,6 +23,13 @@ export function PesertaHeader({ page }: { page: string }) {
         </span>
       </Link>
       <span className="text-muted-foreground text-sm font-medium">{page}</span>
+      <Link
+        href="/"
+        className="text-muted-foreground hover:text-foreground hover:border-primary/40 ml-auto inline-flex items-center gap-1.5 rounded-md border border-transparent px-2.5 py-1.5 text-sm font-medium transition-colors"
+      >
+        <Home className="size-4" />
+        <span className="hidden sm:inline">Beranda</span>
+      </Link>
       <span className="tpb-bar absolute inset-x-0 bottom-0 h-0.5" />
     </header>
   );

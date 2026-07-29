@@ -160,4 +160,45 @@
       0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent),
       0 12px 40px -12px color-mix(in oklab, var(--primary) 45%, transparent);
   }
+
+  /* Soft, harmonious pastel gradient base — replaces flat white on every page. */
+  .app-surface {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(
+        60rem 44rem at 6% -8%,
+        oklch(0.95 0.045 250 / 0.75),
+        transparent 55%
+      ),
+      radial-gradient(
+        56rem 44rem at 102% -2%,
+        oklch(0.95 0.05 155 / 0.62),
+        transparent 55%
+      ),
+      radial-gradient(
+        52rem 42rem at 50% 108%,
+        oklch(0.95 0.05 20 / 0.5),
+        transparent 55%
+      );
+    background-attachment: fixed;
+  }
+
+  :where(.dark) .app-surface {
+    background-image:
+      radial-gradient(
+        60rem 44rem at 6% -8%,
+        oklch(0.55 0.09 250 / 0.28),
+        transparent 55%
+      ),
+      radial-gradient(
+        56rem 44rem at 102% -2%,
+        oklch(0.55 0.09 155 / 0.22),
+        transparent 55%
+      ),
+      radial-gradient(
+        52rem 42rem at 50% 108%,
+        oklch(0.55 0.1 20 / 0.18),
+        transparent 55%
+      );
+  }
 }

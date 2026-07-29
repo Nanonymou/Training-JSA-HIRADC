@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 import { LatihanReviewList } from "@/components/admin/latihan-review-list";
-import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminHeader } from "@/components/admin/admin-header";
 import { readAdminSession } from "@/lib/admin/auth";
 import { redirect } from "next/navigation";
 
@@ -23,22 +21,8 @@ export default async function AdminLatihanPage() {
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card border-border flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <Link
-          href="/admin"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
-        >
-          <ArrowLeft className="size-4" />
-          Dashboard
-        </Link>
-        <span className="text-muted-foreground ml-1 text-sm">
-          / Review Latihan
-        </span>
-        <div className="ml-auto">
-          <AdminLogoutButton />
-        </div>
-      </header>
+    <div className="app-surface flex min-h-dvh flex-col">
+      <AdminHeader page="Review Latihan" />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-6 flex flex-col gap-1">

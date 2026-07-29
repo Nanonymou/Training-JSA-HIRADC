@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { readPesertaSession } from "@/lib/daftar-hadir/session";
 import {
   gradeSubmission,
+  saveQuizAttempt,
   type SubmittedAnswer,
 } from "@/lib/quiz/repository";
 
@@ -65,5 +66,17 @@ export async function POST(request: Request) {
   }
 
   const outcome = await gradeSubmission(answers);
+
+  // Persist the result so the admin sees it (best effort; won't block the score).
+  await saveQuizAttempt(
+    {
+      nama: peserta.nama,
+      email: peserta.email,
+      jabatan: peserta.jabatan,
+      lokasi: peserta.lokasi,
+    },
+    outcome,
+  );
+
   return NextResponse.json(outcome);
 }
