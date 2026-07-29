@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { SoalCategorySelect } from "@/components/admin/soal-category-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +56,7 @@ export function SoalForm({
       soal: draft.soal.trim(),
       pilihan: draft.pilihan.map((option) => option.trim()),
       kunci: draft.kunci,
+      kategori: draft.kategori,
     });
   }
 
@@ -74,6 +76,19 @@ export function SoalForm({
           aria-invalid={Boolean(errors.soal)}
         />
         {errors.soal && <p className="text-destructive text-xs">{errors.soal}</p>}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="kategori" className="text-sm font-medium">
+          Kategori
+        </label>
+        <SoalCategorySelect
+          id="kategori"
+          value={draft.kategori}
+          onChange={(value) =>
+            setDraft((current) => ({ ...current, kategori: value }))
+          }
+        />
       </div>
 
       <fieldset className="flex flex-col gap-2">

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toaster";
 import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
+import { inferCategory } from "@/lib/admin/soal-categories";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ export function BankSoalList() {
       soal: q.soal,
       pilihan: q.pilihan,
       kunci: q.kunci,
+      kategori: inferCategory(q.id),
     })),
   );
   const [formOpen, setFormOpen] = useState(false);
@@ -103,6 +105,9 @@ export function BankSoalList() {
                 {question.soal}
               </p>
               <div className="flex shrink-0 items-center gap-1">
+                <span className="bg-primary/10 text-primary mr-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap">
+                  {question.kategori}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon-sm"
