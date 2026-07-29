@@ -15,4 +15,6 @@ export interface UploadItem {
   /** ISO timestamp the file was submitted. */
   waktuUnggah: string;
   status: UploadStatus;
+  /** Stored file URL (Vercel Blob), when available. */
+  url?: string;
 }

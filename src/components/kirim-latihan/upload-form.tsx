@@ -86,47 +86,84 @@ export function UploadForm() {
 
   function upload() {
     if (!selected || uploading) return;
+    setError(null);
     setUploading(true);
     setProgress(0);
 
-    // Simulate the upload progressing to completion.
-    const timer = setInterval(() => {
-      setProgress((current) => {
-        const next = current + 0.12;
-        if (next >= 1) {
-          clearInterval(timer);
-          finish();
-          return 1;
-        }
-        return next;
-      });
-    }, 120);
-  }
+    // XMLHttpRequest (not fetch) so the progress bar tracks the real upload.
+    const form = new FormData();
+    form.append("file", selected);
 
-  function finish() {
-    const file = selected;
-    if (!file) return;
-    const item: UploadItem = {
-      id:
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}`,
-      name: file.name,
-      size: file.size,
-      ext: getExtension(file.name),
-      waktuUnggah: new Date().toISOString(),
-      status: "Pending",
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/kirim-latihan/upload");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) setProgress(event.loaded / event.total);
     };
-    setItems((current) => [item, ...current]);
-    setSelected(null);
-    setUploading(false);
-    setProgress(0);
-    if (inputRef.current) inputRef.current.value = "";
-    toast({
-      title: "Berkas berhasil dikirim",
-      description: item.name,
-      variant: "success",
-    });
+
+    xhr.onload = () => {
+      setUploading(false);
+      setProgress(0);
+
+      if (xhr.status === 201) {
+        try {
+          const { upload: saved } = JSON.parse(xhr.responseText) as {
+            upload: {
+              id: string;
+              fileName: string;
+              fileSize: number;
+              fileExt: string;
+              waktuUnggah: string;
+              status: UploadItem["status"];
+              urlBerkas: string;
+            };
+          };
+          const item: UploadItem = {
+            id: saved.id,
+            name: saved.fileName,
+            size: saved.fileSize,
+            ext: saved.fileExt,
+            waktuUnggah: saved.waktuUnggah,
+            status: saved.status,
+            url: saved.urlBerkas,
+          };
+          setItems((current) => [item, ...current]);
+          setSelected(null);
+          if (inputRef.current) inputRef.current.value = "";
+          toast({
+            title: "Berkas berhasil dikirim",
+            description: item.name,
+            variant: "success",
+          });
+        } catch {
+          setError("Respons server tidak dapat dibaca.");
+        }
+        return;
+      }
+
+      let message = "Gagal mengunggah berkas.";
+      if (xhr.status === 403) {
+        message = "Isi daftar hadir dulu sebelum mengunggah.";
+      } else {
+        try {
+          message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
+        } catch {
+          // keep the default message
+        }
+      }
+      setError(message);
+      toast({ title: "Gagal mengunggah", description: message, variant: "error" });
+    };
+
+    xhr.onerror = () => {
+      setUploading(false);
+      setProgress(0);
+      const message = "Tidak dapat terhubung ke server.";
+      setError(message);
+      toast({ title: "Gagal mengunggah", description: message, variant: "error" });
+    };
+
+    xhr.send(form);
   }
 
   function remove(id: string) {

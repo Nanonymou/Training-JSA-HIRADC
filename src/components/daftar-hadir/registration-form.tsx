@@ -102,6 +102,17 @@ export function RegistrationForm() {
 
   const goToQuiz = useCallback(() => router.push("/quiz"), [router]);
 
+  // "Ubah data": clear the server session too, so it doesn't outlive the local
+  // record and leave the gated endpoints open.
+  async function handleClear() {
+    try {
+      await fetch("/api/daftar-hadir", { method: "DELETE" });
+    } catch {
+      // Ignore — the local clear below is what the UI reacts to.
+    }
+    clear();
+  }
+
   // Once the daftar hadir is saved, hand the peserta straight to the (now
   // unlocked) quiz after a short beat so they can see the confirmation.
   useEffect(() => {
@@ -138,9 +149,23 @@ export function RegistrationForm() {
     }
 
     setSubmitting(true);
-    // Stand in for the Daftar Hadir POST until the backend phase adds it; the
-    // system fills the timestamp and browser here.
-    await new Promise((resolve) => setTimeout(resolve, 450));
+    // Establish the server session (sets the peserta cookie) so the gated
+    // endpoints — quiz and upload — accept this peserta. Best-effort: if the
+    // server is unreachable, the local record below still drives the UI.
+    try {
+      await fetch("/api/daftar-hadir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: values.nama.trim(),
+          email: values.email.trim(),
+          jabatan: values.jabatan,
+          lokasi: values.lokasi,
+        }),
+      });
+    } catch {
+      // Offline or server down — proceed with the local record.
+    }
 
     const record: Peserta = {
       nama: values.nama.trim(),
@@ -224,7 +249,7 @@ export function RegistrationForm() {
               {!redirecting && <ArrowRight />}
             </Button>
             {!redirecting && (
-              <Button variant="outline" size="sm" onClick={clear}>
+              <Button variant="outline" size="sm" onClick={handleClear}>
                 Ubah data
               </Button>
             )}
