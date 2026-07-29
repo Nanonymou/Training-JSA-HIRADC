@@ -113,6 +113,10 @@ export const uploads = pgTable("uploads", {
   urlBerkas: text("url_berkas").notNull(),
   status: text("status").notNull().default("Pending"),
   adminComment: text("admin_comment"),
+  /** Admin who last set the status (email), null until first reviewed. */
+  reviewedBy: text("reviewed_by"),
+  /** When the status was last changed by an admin; null until reviewed. */
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   waktuUnggah: timestamp("waktu_unggah", { withTimezone: true })
     .notNull()
     .defaultNow(),

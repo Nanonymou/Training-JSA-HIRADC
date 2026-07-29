@@ -31,6 +31,8 @@ export async function saveUpload(input: NewUploadRow): Promise<UploadRow> {
     urlBerkas: input.urlBerkas,
     status: input.status ?? "Pending",
     adminComment: input.adminComment ?? null,
+    reviewedBy: null,
+    reviewedAt: null,
     waktuUnggah: new Date(),
   };
 }

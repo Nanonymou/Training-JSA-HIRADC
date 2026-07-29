@@ -43,6 +43,13 @@
       "when": 1785316540309,
       "tag": "0005_third_firedrake",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785317103177,
+      "tag": "0006_oval_puppet_master",
+      "breakpoints": true
     }
   ]
 }
