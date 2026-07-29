@@ -6,6 +6,7 @@ import {
   BookOpen,
   FileCheck2,
   LayoutDashboard,
+  ListChecks,
   Users,
 } from "lucide-react";
 
@@ -108,6 +109,21 @@ export default async function AdminDashboardPage() {
               <p className="text-sm font-medium">CMS Materi</p>
               <p className="text-muted-foreground text-xs">
                 Kelola topik &amp; materi training
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/bank-soal"
+            className="bg-card border-border hover:border-primary/40 flex items-center gap-3 rounded-xl border p-4 transition-colors"
+          >
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <ListChecks className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Bank Soal</p>
+              <p className="text-muted-foreground text-xs">
+                Kelola soal quiz
               </p>
             </div>
           </Link>
