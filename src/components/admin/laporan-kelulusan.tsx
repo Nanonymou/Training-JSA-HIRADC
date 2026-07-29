@@ -1,10 +1,16 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, FileSpreadsheet, FileText, Search } from "lucide-react";
 
 import { PeriodFilter, withinPeriod } from "@/components/admin/period-filter";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toaster";
+import {
+  exportPesertaExcel,
+  exportPesertaPdf,
+} from "@/lib/admin/peserta-export";
 import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
 import { PESERTA_RECORDS, type PesertaRecord } from "@/lib/admin/peserta";
 import { cn } from "@/lib/utils";
@@ -89,6 +95,28 @@ export function LaporanKelulusan() {
   const lulus = rows.filter((p) => p.quizStatus === "Lulus").length;
   const recap = useMemo(() => recapBySite(rows), [rows]);
 
+  const [exporting, setExporting] = useState(false);
+  const exportLabel =
+    sites.length === 1 ? sites[0] : sites.length > 1 ? "multi-site" : "semua";
+
+  async function runExport(kind: "excel" | "pdf") {
+    if (rows.length === 0 || exporting) return;
+    setExporting(true);
+    try {
+      if (kind === "excel") await exportPesertaExcel(rows, `kelulusan-${exportLabel}`);
+      else await exportPesertaPdf(rows, `kelulusan-${exportLabel}`);
+      toast({
+        title: `Ekspor ${kind === "excel" ? "Excel" : "PDF"} siap`,
+        description: `${rows.length} peserta.`,
+        variant: "success",
+      });
+    } catch {
+      toast({ title: "Gagal mengekspor", variant: "error" });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -142,10 +170,32 @@ export function LaporanKelulusan() {
         )}
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        {rows.length} peserta · {lulus} lulus{" "}
-        {sites.length > 0 ? `di ${sites.length} site terpilih` : "semua site"}.
-      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-xs">
+          {rows.length} peserta · {lulus} lulus{" "}
+          {sites.length > 0 ? `di ${sites.length} site terpilih` : "semua site"}.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runExport("excel")}
+            disabled={exporting || rows.length === 0}
+          >
+            <FileSpreadsheet />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runExport("pdf")}
+            disabled={exporting || rows.length === 0}
+          >
+            <FileText />
+            PDF
+          </Button>
+        </div>
+      </div>
 
       {/* Combined per-site recap */}
       {recap.length > 0 && (
