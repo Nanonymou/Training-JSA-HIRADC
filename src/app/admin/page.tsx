@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileCheck2, LayoutDashboard } from "lucide-react";
+import { FileCheck2, LayoutDashboard, Users } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { readAdminSession } from "@/lib/admin/auth";
@@ -57,6 +57,21 @@ export default async function AdminDashboardPage() {
               <p className="text-sm font-medium">Review Latihan</p>
               <p className="text-muted-foreground text-xs">
                 Tinjau &amp; pratinjau berkas peserta
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/data-peserta"
+            className="bg-card border-border hover:border-primary/40 flex items-center gap-3 rounded-xl border p-4 transition-colors"
+          >
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <Users className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Data Peserta</p>
+              <p className="text-muted-foreground text-xs">
+                Status quiz &amp; upload per peserta
               </p>
             </div>
           </Link>
