@@ -5,6 +5,28 @@ import { FileText, MessageSquare } from "lucide-react";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { useReviews } from "@/hooks/use-reviews";
 import { ADMIN_UPLOADS } from "@/lib/admin/latihan";
+import type { UploadStatus } from "@/lib/upload/types";
+import { cn } from "@/lib/utils";
+
+/** Left-accent and comment-box tint per review status. */
+const STATUS_TONE: Record<UploadStatus, { accent: string; comment: string }> = {
+  Pending: {
+    accent: "border-l-amber-500/60",
+    comment: "bg-amber-500/5 text-amber-700 dark:text-amber-300",
+  },
+  Disetujui: {
+    accent: "border-l-emerald-500/60",
+    comment: "bg-emerald-500/5 text-emerald-700 dark:text-emerald-300",
+  },
+  "Perlu Revisi": {
+    accent: "border-l-sky-500/60",
+    comment: "bg-sky-500/5 text-sky-700 dark:text-sky-300",
+  },
+  Ditolak: {
+    accent: "border-l-destructive/60",
+    comment: "bg-destructive/5 text-destructive",
+  },
+};
 
 // A peserta's own submissions (mock): the first few shared uploads.
 const MY_SUBMISSIONS = ADMIN_UPLOADS.slice(0, 3);
@@ -36,10 +58,14 @@ export function LatihanStatus() {
         {MY_SUBMISSIONS.map((upload) => {
           const review = reviews[upload.id];
           const status = review?.status ?? upload.status;
+          const tone = STATUS_TONE[status];
           return (
             <li
               key={upload.id}
-              className="bg-card border-border flex flex-col gap-2 rounded-xl border p-3"
+              className={cn(
+                "bg-card border-border flex flex-col gap-2 rounded-xl border border-l-4 p-3",
+                tone.accent,
+              )}
             >
               <div className="flex items-center gap-3">
                 <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
@@ -56,10 +82,18 @@ export function LatihanStatus() {
                 <StatusBadge status={status} />
               </div>
               {review?.comment && (
-                <p className="text-foreground/90 bg-muted/40 flex gap-2 rounded-lg px-3 py-2 text-xs text-pretty">
-                  <MessageSquare className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
-                  {review.comment}
-                </p>
+                <div
+                  className={cn(
+                    "flex gap-2 rounded-lg px-3 py-2 text-xs text-pretty",
+                    tone.comment,
+                  )}
+                >
+                  <MessageSquare className="mt-0.5 size-3.5 shrink-0 opacity-70" />
+                  <span>
+                    <span className="font-medium">Catatan admin: </span>
+                    {review.comment}
+                  </span>
+                </div>
               )}
             </li>
           );
