@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db/client";
 import { questionOptions, questions } from "@/lib/db/schema";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
 import { DEFAULT_CATEGORY } from "@/lib/admin/soal-categories";
+import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 /**
  * Server-side writes for the question bank.
@@ -31,7 +32,11 @@ export async function createSoal(draft: SoalDraft): Promise<SoalRecord> {
 
   const [question] = await db
     .insert(questions)
-    .values({ soal: draft.soal, category: draft.kategori })
+    .values({
+      soal: draft.soal,
+      category: draft.kategori,
+      trainingId: DEFAULT_TRAINING_ID,
+    })
     .returning({ id: questions.id });
 
   await db.insert(questionOptions).values(

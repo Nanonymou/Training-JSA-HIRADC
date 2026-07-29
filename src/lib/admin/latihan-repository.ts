@@ -1,8 +1,13 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { uploads } from "@/lib/db/schema";
 import { ADMIN_UPLOADS, type AdminUpload, type PreviewKind } from "@/lib/admin/latihan";
+import {
+  DEFAULT_TRAINING_ID,
+  isDefaultTraining,
+  resolveTrainingId,
+} from "@/lib/training/scope";
 
 /**
  * Server-side reads for the latihan review screen.
@@ -23,15 +28,19 @@ function previewKindFor(ext: string): PreviewKind {
   return "unsupported";
 }
 
-export async function getReviewUploads(): Promise<AdminUpload[]> {
+export async function getReviewUploads(
+  trainingId: string = DEFAULT_TRAINING_ID,
+): Promise<AdminUpload[]> {
+  const scope = resolveTrainingId(trainingId);
   const db = getDb();
   if (!db) {
-    return ADMIN_UPLOADS;
+    return isDefaultTraining(scope) ? ADMIN_UPLOADS : [];
   }
 
   const rows = await db
     .select()
     .from(uploads)
+    .where(eq(uploads.trainingId, scope))
     .orderBy(desc(uploads.waktuUnggah));
 
   return rows.map((row) => ({

@@ -1,7 +1,15 @@
+import { eq } from "drizzle-orm";
+
 import { getDb } from "@/lib/db/client";
+import { questions } from "@/lib/db/schema";
 import { shuffle } from "@/lib/quiz/attempt";
 import { QUIZ_CONFIG } from "@/lib/quiz/config";
 import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
+import {
+  DEFAULT_TRAINING_ID,
+  isDefaultTraining,
+  resolveTrainingId,
+} from "@/lib/training/scope";
 
 /**
  * Server-side access to the quiz question bank.
@@ -60,12 +68,22 @@ function seedRecords(): QuizQuestionRecord[] {
   }));
 }
 
-/** Every question with its options, from the DB or the seed fallback. */
-export async function getQuestionRecords(): Promise<QuizQuestionRecord[]> {
+/**
+ * Every question with its options for one training, from the DB or the seed
+ * fallback. The seed bank belongs to the default training, so a non-default
+ * scope returns nothing from the seed — matching the DB's per-training filter.
+ */
+export async function getQuestionRecords(
+  trainingId: string = DEFAULT_TRAINING_ID,
+): Promise<QuizQuestionRecord[]> {
+  const scope = resolveTrainingId(trainingId);
   const db = getDb();
-  if (!db) return seedRecords();
+  if (!db) return isDefaultTraining(scope) ? seedRecords() : [];
 
-  const rows = await db.query.questions.findMany({ with: { options: true } });
+  const rows = await db.query.questions.findMany({
+    where: eq(questions.trainingId, scope),
+    with: { options: true },
+  });
   return rows.map((row) => ({
     id: row.id,
     soal: row.soal,
@@ -86,8 +104,9 @@ export async function getQuestionRecords(): Promise<QuizQuestionRecord[]> {
  */
 export async function getRandomQuizQuestions(
   count: number,
+  trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<PublicQuizQuestion[]> {
-  const records = await getQuestionRecords();
+  const records = await getQuestionRecords(trainingId);
   return shuffle(records)
     .slice(0, count)
     .map((question) => ({
@@ -126,8 +145,9 @@ export interface GradeOutcome {
  */
 export async function gradeSubmission(
   answers: SubmittedAnswer[],
+  trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<GradeOutcome> {
-  const records = await getQuestionRecords();
+  const records = await getQuestionRecords(trainingId);
 
   const optionsById = new Map<
     string,

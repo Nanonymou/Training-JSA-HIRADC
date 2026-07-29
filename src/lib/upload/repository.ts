@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { uploads, type NewUploadRow, type UploadRow } from "@/lib/db/schema";
 import type { UploadStatus } from "@/lib/upload/types";
+import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 /**
  * Server-side persistence for latihan uploads.
@@ -24,7 +25,7 @@ export async function saveUpload(input: NewUploadRow): Promise<UploadRow> {
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}`,
-    trainingId: input.trainingId ?? "jsa-hiradc",
+    trainingId: input.trainingId ?? DEFAULT_TRAINING_ID,
     pesertaNama: input.pesertaNama,
     pesertaEmail: input.pesertaEmail,
     lokasi: input.lokasi ?? null,

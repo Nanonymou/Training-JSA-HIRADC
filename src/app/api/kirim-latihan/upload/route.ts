@@ -4,6 +4,7 @@ import { readPesertaSession } from "@/lib/daftar-hadir/session";
 import { getExtension, validateUpload } from "@/lib/upload/config";
 import { saveUpload } from "@/lib/upload/repository";
 import { storeUploadFile } from "@/lib/upload/storage";
+import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
 
   const stored = await storeUploadFile(file);
   const upload = await saveUpload({
-    trainingId: "jsa-hiradc",
+    trainingId: DEFAULT_TRAINING_ID,
     pesertaNama: peserta.nama,
     pesertaEmail: peserta.email,
     lokasi: peserta.lokasi,

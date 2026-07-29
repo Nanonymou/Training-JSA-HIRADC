@@ -1,6 +1,13 @@
+import { eq } from "drizzle-orm";
+
 import { getDb } from "@/lib/db/client";
 import { peserta as pesertaTable } from "@/lib/db/schema";
 import { PESERTA_RECORDS, type PesertaRecord } from "@/lib/admin/peserta";
+import {
+  DEFAULT_TRAINING_ID,
+  isDefaultTraining,
+  resolveTrainingId,
+} from "@/lib/training/scope";
 
 /**
  * Server-side access to peserta records, with filtering.
@@ -16,13 +23,19 @@ export interface PesertaFilter {
   q?: string;
   from?: string;
   to?: string;
+  /** Training scope; defaults to the primary training. */
+  trainingId?: string;
 }
 
-async function fromSource(): Promise<PesertaRecord[]> {
+async function fromSource(trainingId: string): Promise<PesertaRecord[]> {
+  const scope = resolveTrainingId(trainingId);
   const db = getDb();
-  if (!db) return PESERTA_RECORDS;
+  if (!db) return isDefaultTraining(scope) ? PESERTA_RECORDS : [];
 
-  const rows = await db.select().from(pesertaTable);
+  const rows = await db
+    .select()
+    .from(pesertaTable)
+    .where(eq(pesertaTable.trainingId, scope));
   return rows.map((row) => ({
     id: row.id,
     nama: row.nama,
@@ -59,13 +72,17 @@ export function filterPeserta(
 export async function getPesertaRecords(
   filter: PesertaFilter = {},
 ): Promise<PesertaRecord[]> {
-  return filterPeserta(await fromSource(), filter);
+  return filterPeserta(
+    await fromSource(filter.trainingId ?? DEFAULT_TRAINING_ID),
+    filter,
+  );
 }
 
-/** One peserta by id, or null if there's no match. */
+/** One peserta by id within a training scope, or null if there's no match. */
 export async function getPesertaById(
   id: string,
+  trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<PesertaRecord | null> {
-  const rows = await fromSource();
+  const rows = await fromSource(trainingId);
   return rows.find((row) => row.id === id) ?? null;
 }
