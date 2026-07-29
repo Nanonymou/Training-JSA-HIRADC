@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+
 import { getDb } from "@/lib/db/client";
 import { questionOptions, questions } from "@/lib/db/schema";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
@@ -41,4 +43,32 @@ export async function createSoal(draft: SoalDraft): Promise<SoalRecord> {
   );
 
   return { id: question.id, ...draft };
+}
+
+export async function updateSoal(
+  id: string,
+  draft: SoalDraft,
+): Promise<SoalRecord> {
+  const db = getDb();
+  if (!db) {
+    return { id, ...draft };
+  }
+
+  await db
+    .update(questions)
+    .set({ soal: draft.soal, category: draft.kategori })
+    .where(eq(questions.id, id));
+
+  await db.delete(questionOptions).where(eq(questionOptions.questionId, id));
+
+  await db.insert(questionOptions).values(
+    draft.pilihan.map((label, index) => ({
+      questionId: id,
+      label,
+      isCorrect: index === draft.kunci,
+      position: index,
+    })),
+  );
+
+  return { id, ...draft };
 }

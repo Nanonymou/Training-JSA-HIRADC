@@ -60,3 +60,18 @@ export function hasErrors(errors: SoalErrors): boolean {
       (errors.pilihan && errors.pilihan.some(Boolean)),
   );
 }
+
+/** Coerce an untrusted request body into a SoalDraft (validate separately). */
+export function coerceDraft(body: unknown): SoalDraft {
+  const source = (body ?? {}) as Record<string, unknown>;
+  const pilihan = Array.isArray(source.pilihan)
+    ? source.pilihan.map((p) => (typeof p === "string" ? p : ""))
+    : [];
+  return {
+    soal: typeof source.soal === "string" ? source.soal : "",
+    pilihan,
+    kunci: typeof source.kunci === "number" ? source.kunci : 0,
+    kategori:
+      typeof source.kategori === "string" ? source.kategori : DEFAULT_CATEGORY,
+  };
+}

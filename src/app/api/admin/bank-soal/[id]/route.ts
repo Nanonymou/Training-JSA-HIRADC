@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 
 import { readAdminSession } from "@/lib/admin/auth";
-import { createSoal } from "@/lib/admin/bank-soal-repository";
+import { updateSoal } from "@/lib/admin/bank-soal-repository";
 import { coerceDraft, hasErrors, validateDraft } from "@/lib/admin/soal-draft";
 
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/admin/bank-soal — add a question to the bank. Admin-only. Validates
- * the draft (question, options, correct answer) and returns the created record.
+ * PUT /api/admin/bank-soal/[id] — edit an existing question. Admin-only.
+ * Validates the draft and replaces the question's text, category, and options.
  */
-export async function POST(request: Request) {
+export async function PUT(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
   const admin = await readAdminSession();
   if (!admin) {
     return NextResponse.json({ error: "Butuh login admin." }, { status: 403 });
   }
+
+  const { id } = await context.params;
 
   let body: unknown;
   try {
@@ -29,12 +34,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ errors }, { status: 400 });
   }
 
-  const soal = await createSoal({
+  const soal = await updateSoal(id, {
     soal: draft.soal.trim(),
     pilihan: draft.pilihan.map((p) => p.trim()),
     kunci: draft.kunci,
     kategori: draft.kategori,
   });
 
-  return NextResponse.json({ soal }, { status: 201 });
+  return NextResponse.json({ soal });
 }
