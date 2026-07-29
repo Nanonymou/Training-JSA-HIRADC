@@ -5,8 +5,6 @@ import { ArrowLeft } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { DashboardView } from "@/components/admin/dashboard-view";
-import { LokasiBarChart } from "@/components/admin/lokasi-bar-chart";
-import { ProgressLineChart } from "@/components/admin/progress-line-chart";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -50,13 +48,7 @@ export default async function DashboardMonitoringPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <DashboardView />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <LokasiBarChart />
-            <ProgressLineChart />
-          </div>
-        </div>
+        <DashboardView />
       </main>
     </div>
   );

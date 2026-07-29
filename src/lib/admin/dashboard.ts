@@ -59,9 +59,11 @@ export interface TrendPoint {
  * Cumulative attendance/pass trend by day, derived from the records' waktuHadir.
  * Ordered oldest to newest so it reads left to right as growth over time.
  */
-export function getProgressTrend(): TrendPoint[] {
+export function getProgressTrend(
+  rows: PesertaRecord[] = PESERTA_RECORDS,
+): TrendPoint[] {
   const perDay = new Map<string, { peserta: number; lulus: number }>();
-  for (const p of PESERTA_RECORDS) {
+  for (const p of rows) {
     const day = p.waktuHadir.slice(0, 10);
     const cur = perDay.get(day) ?? { peserta: 0, lulus: 0 };
     cur.peserta += 1;

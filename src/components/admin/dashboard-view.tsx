@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 
 import { DashboardStats } from "@/components/admin/dashboard-stats";
+import { LokasiBarChart } from "@/components/admin/lokasi-bar-chart";
 import { LOKASI_ALL, LokasiFilter } from "@/components/admin/lokasi-filter";
+import { ProgressLineChart } from "@/components/admin/progress-line-chart";
 import { getDashboardSummary } from "@/lib/admin/dashboard";
 import { PESERTA_RECORDS } from "@/lib/admin/peserta";
 
@@ -32,6 +34,10 @@ export function DashboardView() {
     <div className="flex flex-col gap-4">
       <LokasiFilter id="dash-lokasi" value={lokasi} onChange={setLokasi} />
       <DashboardStats summary={summary} />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <LokasiBarChart activeLokasi={lokasi} />
+        <ProgressLineChart rows={rows} />
+      </div>
     </div>
   );
 }

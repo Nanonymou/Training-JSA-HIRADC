@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { getProgressTrend } from "@/lib/admin/dashboard";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 
 const WIDTH = 320;
 const HEIGHT = 150;
@@ -26,10 +27,10 @@ function shortDate(iso: string): string {
  * area under the line, and points that respond to hover with a tooltip. Built as
  * plain SVG with a token-coloured recessive baseline; reads the mock daily trend.
  */
-export function ProgressLineChart() {
+export function ProgressLineChart({ rows }: { rows?: PesertaRecord[] }) {
   const gradientId = useId();
   const [active, setActive] = useState<number | null>(null);
-  const points = getProgressTrend();
+  const points = getProgressTrend(rows);
 
   const innerW = WIDTH - PAD.left - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
@@ -61,6 +62,11 @@ export function ProgressLineChart() {
         </p>
       </div>
 
+      {points.length === 0 ? (
+        <div className="text-muted-foreground flex h-44 items-center justify-center text-sm">
+          Belum ada data untuk lokasi ini.
+        </div>
+      ) : (
       <div className="relative">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -154,6 +160,7 @@ export function ProgressLineChart() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

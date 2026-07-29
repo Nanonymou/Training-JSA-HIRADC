@@ -3,6 +3,8 @@
 import { motion, useReducedMotion } from "motion/react";
 
 import { getLokasiStats } from "@/lib/admin/dashboard";
+import { LOKASI_ALL } from "@/components/admin/lokasi-filter";
+import { cn } from "@/lib/utils";
 
 /**
  * Per-site comparison of peserta counts — a horizontal bar chart.
@@ -13,10 +15,15 @@ import { getLokasiStats } from "@/lib/admin/dashboard";
  * with the count and a lulus/upload breakdown, so the small dataset needs no
  * hover tooltip to be read. Runs on the mock aggregates.
  */
-export function LokasiBarChart() {
+export function LokasiBarChart({
+  activeLokasi = LOKASI_ALL,
+}: {
+  activeLokasi?: string;
+}) {
   const reduceMotion = useReducedMotion();
   const stats = getLokasiStats();
   const max = Math.max(1, ...stats.map((s) => s.peserta));
+  const hasFocus = activeLokasi !== LOKASI_ALL;
 
   return (
     <div className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5">
@@ -32,8 +39,15 @@ export function LokasiBarChart() {
       <ul className="flex flex-col gap-3">
         {stats.map((stat) => {
           const ratio = stat.peserta / max;
+          const dimmed = hasFocus && stat.lokasi !== activeLokasi;
           return (
-            <li key={stat.lokasi} className="flex flex-col gap-1">
+            <li
+              key={stat.lokasi}
+              className={cn(
+                "flex flex-col gap-1 transition-opacity",
+                dimmed && "opacity-40",
+              )}
+            >
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{stat.lokasi}</span>
                 <span className="text-muted-foreground text-xs tabular-nums">
