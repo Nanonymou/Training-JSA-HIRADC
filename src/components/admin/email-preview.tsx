@@ -22,7 +22,7 @@ type SendState = "idle" | "sending" | "sent" | "error";
  *
  * Reads the saved review for this upload and composes the notification, so the
  * admin can see exactly what gets sent when they update the status. Pending shows
- * a note that no email is sent. Sending is wired in the backend phase.
+ * a note that no email is sent. The Send button posts to /api/admin/notifikasi.
  */
 export function EmailPreview({
   uploadId,
@@ -46,9 +46,18 @@ export function EmailPreview({
   async function sendEmail() {
     setSend("sending");
     try {
-      // Simulate the send until the email API lands in the backend phase; the
-      // backend call will throw on a non-OK response, hitting the catch below.
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      const res = await fetch("/api/admin/notifikasi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          pesertaNama,
+          pesertaEmail,
+          status,
+          comment,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSend("sent");
       toast({
         title: "Email terkirim",
