@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { BookOpen, Check, Layers } from "lucide-react";
 
@@ -9,12 +9,37 @@ import { cn } from "@/lib/utils";
 
 const SELECTED_KEY = "training-jsa-hiradc:selected-training:v1";
 
-function readSelected(): string | null {
+// The remembered selection lives in localStorage, read through
+// useSyncExternalStore so the client hydrates from the server's null snapshot
+// without a mismatch, then re-reads once mounted.
+const selectedListeners = new Set<() => void>();
+
+function subscribeSelected(onChange: () => void): () => void {
+  selectedListeners.add(onChange);
+  return () => {
+    selectedListeners.delete(onChange);
+  };
+}
+
+function getSelectedSnapshot(): string | null {
   try {
     return window.localStorage.getItem(SELECTED_KEY);
   } catch {
     return null;
   }
+}
+
+function getSelectedServerSnapshot(): string | null {
+  return null;
+}
+
+function writeSelected(id: string): void {
+  try {
+    window.localStorage.setItem(SELECTED_KEY, id);
+  } catch {
+    // Ignore — navigation still proceeds.
+  }
+  selectedListeners.forEach((listener) => listener());
 }
 
 /**
@@ -30,21 +55,11 @@ export function TrainingSelector({
   initial: TrainingModule[];
 }) {
   const [trainings, setTrainings] = useState<TrainingModule[]>(initial);
-  const [selected, setSelected] = useState<string | null>(null);
-
-  // Read the remembered selection after mount (avoids a hydration mismatch).
-  useEffect(() => {
-    setSelected(readSelected());
-  }, []);
-
-  function select(id: string) {
-    setSelected(id);
-    try {
-      window.localStorage.setItem(SELECTED_KEY, id);
-    } catch {
-      // Ignore — navigation still proceeds.
-    }
-  }
+  const selected = useSyncExternalStore(
+    subscribeSelected,
+    getSelectedSnapshot,
+    getSelectedServerSnapshot,
+  );
 
   useEffect(() => {
     let alive = true;
@@ -73,7 +88,7 @@ export function TrainingSelector({
           <Link
             key={training.id}
             href="/materi"
-            onClick={() => select(training.id)}
+            onClick={() => writeSelected(training.id)}
             aria-current={selected === training.id ? "true" : undefined}
             className={cn(
               "bg-card flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
