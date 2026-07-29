@@ -61,3 +61,11 @@ export async function getPesertaRecords(
 ): Promise<PesertaRecord[]> {
   return filterPeserta(await fromSource(), filter);
 }
+
+/** One peserta by id, or null if there's no match. */
+export async function getPesertaById(
+  id: string,
+): Promise<PesertaRecord | null> {
+  const rows = await fromSource();
+  return rows.find((row) => row.id === id) ?? null;
+}
