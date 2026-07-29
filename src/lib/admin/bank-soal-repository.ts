@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { questionOptions, questions } from "@/lib/db/schema";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
+import { DEFAULT_CATEGORY } from "@/lib/admin/soal-categories";
 
 /**
  * Server-side writes for the question bank.
@@ -71,6 +72,39 @@ export async function updateSoal(
   );
 
   return { id, ...draft };
+}
+
+export async function duplicateSoal(id: string): Promise<SoalRecord | null> {
+  const db = getDb();
+  if (!db) {
+    // No DB in dev: the client duplicates optimistically; just mint an id.
+    return { id: newId(), soal: "", pilihan: [], kunci: 0, kategori: DEFAULT_CATEGORY };
+  }
+
+  const [source] = await db
+    .select()
+    .from(questions)
+    .where(eq(questions.id, id))
+    .limit(1);
+  if (!source) return null;
+
+  const options = await db
+    .select()
+    .from(questionOptions)
+    .where(eq(questionOptions.questionId, id))
+    .orderBy(questionOptions.position);
+
+  const draft: SoalDraft = {
+    soal: `${source.soal} (salinan)`,
+    pilihan: options.map((o) => o.label),
+    kunci: Math.max(
+      0,
+      options.findIndex((o) => o.isCorrect),
+    ),
+    kategori: source.category,
+  };
+
+  return createSoal(draft);
 }
 
 export async function deleteSoal(id: string): Promise<void> {
