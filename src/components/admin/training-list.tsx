@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Layers, Plus } from "lucide-react";
+import { BookOpen, Layers, Pencil, Plus } from "lucide-react";
 
 import { TrainingForm, type TrainingDraft } from "@/components/admin/training-form";
 import { Button } from "@/components/ui/button";
@@ -42,28 +42,51 @@ export function TrainingList() {
   );
 
   const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<TrainingItem | null>(null);
 
-  function addTraining(draft: TrainingDraft) {
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}`;
-    setItems((current) => [
-      {
-        id,
-        judul: draft.judul,
-        deskripsi: draft.deskripsi || "Belum ada deskripsi.",
-        aktif: false,
-        jumlahBab: 0,
-      },
-      ...current,
-    ]);
+  function openAdd() {
+    setEditing(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(item: TrainingItem) {
+    setEditing(item);
+    setFormOpen(true);
+  }
+
+  function submitTraining(draft: TrainingDraft) {
+    if (editing) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === editing.id
+            ? {
+                ...item,
+                judul: draft.judul,
+                deskripsi: draft.deskripsi || item.deskripsi,
+              }
+            : item,
+        ),
+      );
+      toast({ title: "Training diperbarui", description: draft.judul, variant: "success" });
+    } else {
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}`;
+      setItems((current) => [
+        {
+          id,
+          judul: draft.judul,
+          deskripsi: draft.deskripsi || "Belum ada deskripsi.",
+          aktif: false,
+          jumlahBab: 0,
+        },
+        ...current,
+      ]);
+      toast({ title: "Training ditambahkan", description: draft.judul, variant: "success" });
+    }
     setFormOpen(false);
-    toast({
-      title: "Training ditambahkan",
-      description: draft.judul,
-      variant: "success",
-    });
+    setEditing(null);
   }
 
   function toggle(id: string, aktif: boolean) {
@@ -84,7 +107,7 @@ export function TrainingList() {
         <p className="text-muted-foreground text-sm">
           {items.filter((i) => i.aktif).length} aktif dari {items.length} training
         </p>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
+        <Button size="sm" onClick={openAdd}>
           <Plus />
           Tambah Training
         </Button>
@@ -109,16 +132,26 @@ export function TrainingList() {
                 {item.jumlahBab} bab
               </p>
             </div>
-            <label className="flex shrink-0 flex-col items-center gap-1">
-              <Switch
-                checked={item.aktif}
-                onCheckedChange={(value) => toggle(item.id, value)}
-                aria-label={`Aktifkan ${item.judul}`}
-              />
-              <span className="text-muted-foreground text-xs">
-                {item.aktif ? "Aktif" : "Nonaktif"}
-              </span>
-            </label>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Sunting ${item.judul}`}
+                onClick={() => openEdit(item)}
+              >
+                <Pencil />
+              </Button>
+              <label className="flex flex-col items-center gap-1">
+                <Switch
+                  checked={item.aktif}
+                  onCheckedChange={(value) => toggle(item.id, value)}
+                  aria-label={`Aktifkan ${item.judul}`}
+                />
+                <span className="text-muted-foreground text-xs">
+                  {item.aktif ? "Aktif" : "Nonaktif"}
+                </span>
+              </label>
+            </div>
           </li>
         ))}
       </ul>
@@ -126,11 +159,20 @@ export function TrainingList() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Tambah Training</DialogTitle>
+            <DialogTitle>
+              {editing ? "Sunting Training" : "Tambah Training"}
+            </DialogTitle>
           </DialogHeader>
           <TrainingForm
-            onSubmit={addTraining}
+            key={editing?.id ?? "new"}
+            initial={
+              editing
+                ? { judul: editing.judul, deskripsi: editing.deskripsi }
+                : undefined
+            }
+            onSubmit={submitTraining}
             onCancel={() => setFormOpen(false)}
+            submitLabel={editing ? "Simpan Perubahan" : "Tambah Training"}
           />
         </DialogContent>
       </Dialog>

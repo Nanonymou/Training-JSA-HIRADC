@@ -18,14 +18,18 @@ export interface TrainingDraft {
  * Meant to live inside the add-training dialog.
  */
 export function TrainingForm({
+  initial,
   onSubmit,
   onCancel,
+  submitLabel = "Tambah Training",
 }: {
+  initial?: TrainingDraft;
   onSubmit: (draft: TrainingDraft) => void;
   onCancel?: () => void;
+  submitLabel?: string;
 }) {
-  const [judul, setJudul] = useState("");
-  const [deskripsi, setDeskripsi] = useState("");
+  const [judul, setJudul] = useState(initial?.judul ?? "");
+  const [deskripsi, setDeskripsi] = useState(initial?.deskripsi ?? "");
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: React.FormEvent) {
@@ -76,7 +80,7 @@ export function TrainingForm({
           </Button>
         )}
         <Button type="submit" size="sm">
-          Tambah Training
+          {submitLabel}
         </Button>
       </div>
     </form>
