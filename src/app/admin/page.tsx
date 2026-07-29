@@ -6,6 +6,7 @@ import {
   BookOpen,
   FileBarChart,
   FileCheck2,
+  Layers,
   LayoutDashboard,
   ListChecks,
   Users,
@@ -143,12 +144,22 @@ export default async function AdminDashboardPage() {
               </p>
             </div>
           </Link>
-        </div>
 
-        <p className="text-muted-foreground mt-4 text-xs">
-          Manajemen konten, bank soal, dan laporan akan hadir pada fase
-          berikutnya.
-        </p>
+          <Link
+            href="/admin/training"
+            className="bg-card border-border hover:border-primary/40 flex items-center gap-3 rounded-xl border p-4 transition-colors"
+          >
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <Layers className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Multi-Training</p>
+              <p className="text-muted-foreground text-xs">
+                Kelola beberapa topik training
+              </p>
+            </div>
+          </Link>
+        </div>
       </main>
     </div>
   );
