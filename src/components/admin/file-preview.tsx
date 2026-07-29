@@ -41,14 +41,42 @@ export function FilePreview({
     </a>
   );
 
-  if (previewKind === "unsupported" || failed) {
+  // Office docs can be shown in-browser via the Office Online viewer, but only
+  // when the file is at a public URL it can fetch (a Blob URL in production).
+  const isPublicUrl = /^https?:\/\//.test(url);
+
+  if (previewKind === "unsupported" && !failed) {
+    if (isPublicUrl) {
+      const viewerSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      return (
+        <div className="flex h-full min-h-0 flex-col gap-3">
+          <iframe
+            src={viewerSrc}
+            title={`Pratinjau ${fileName}`}
+            className="bg-muted/40 min-h-0 w-full flex-1 rounded-lg"
+            onError={() => setFailed(true)}
+          />
+          <div className="flex justify-center">{downloadable}</div>
+        </div>
+      );
+    }
     return (
       <div className="bg-muted/40 flex h-full min-h-52 flex-col items-center justify-center gap-3 rounded-lg p-6 text-center">
         <FileWarning className="text-muted-foreground size-8" />
         <p className="text-muted-foreground text-sm text-pretty">
-          {failed
-            ? "Berkas tidak dapat dimuat untuk pratinjau."
-            : "Format ini tidak bisa dipratinjau langsung."}
+          Pratinjau dokumen Office tersedia setelah berkas tersimpan online.
+        </p>
+        {downloadable}
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="bg-muted/40 flex h-full min-h-52 flex-col items-center justify-center gap-3 rounded-lg p-6 text-center">
+        <FileWarning className="text-muted-foreground size-8" />
+        <p className="text-muted-foreground text-sm text-pretty">
+          Berkas tidak dapat dimuat untuk pratinjau.
         </p>
         {downloadable}
       </div>
