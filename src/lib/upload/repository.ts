@@ -84,3 +84,27 @@ export async function updateReview(
 
   return { found: Boolean(row), row: row ?? null };
 }
+
+/**
+ * Record the outcome of a notification email on the upload row: its status
+ * (Terkirim / Gagal) and, on success, when it was sent. `found` mirrors
+ * updateReview's dev-vs-DB semantics.
+ */
+export async function updateNotifStatus(
+  uploadId: string,
+  status: "Terkirim" | "Gagal",
+  sentAt: Date | null,
+): Promise<ReviewResult> {
+  const db = getDb();
+  if (!db) {
+    return { found: true, row: null };
+  }
+
+  const [row] = await db
+    .update(uploads)
+    .set({ notifStatus: status, notifSentAt: sentAt })
+    .where(eq(uploads.id, uploadId))
+    .returning();
+
+  return { found: Boolean(row), row: row ?? null };
+}
