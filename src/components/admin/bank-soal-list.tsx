@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { SoalForm } from "@/components/admin/soal-form";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,22 @@ export function BankSoalList() {
     setEditing(null);
   }
 
+  function duplicate(item: SoalItem) {
+    setItems((current) => {
+      const index = current.findIndex((i) => i.id === item.id);
+      const copy: SoalItem = {
+        ...item,
+        id: newId(),
+        soal: `${item.soal} (salinan)`,
+        pilihan: [...item.pilihan],
+      };
+      const next = [...current];
+      next.splice(index + 1, 0, copy);
+      return next;
+    });
+    toast({ title: "Soal diduplikasi", variant: "info" });
+  }
+
   function confirmDelete() {
     if (!deleting) return;
     setItems((current) => current.filter((i) => i.id !== deleting.id));
@@ -119,6 +135,14 @@ export function BankSoalList() {
                   onClick={() => openEdit(question)}
                 >
                   <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Duplikat soal ${index + 1}`}
+                  onClick={() => duplicate(question)}
+                >
+                  <Copy />
                 </Button>
                 <Button
                   variant="ghost"
