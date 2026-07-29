@@ -25,6 +25,8 @@ export const questions = pgTable("questions", {
   id: uuid("id").primaryKey().defaultRandom(),
   trainingId: text("training_id").notNull().default("jsa-hiradc"),
   soal: text("soal").notNull(),
+  /** Question category, for filtering the bank (e.g. JSA, HIRADC). */
+  category: text("category").notNull().default("Umum"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
