@@ -17,6 +17,49 @@ export interface TrainingModule {
   updated: string;
 }
 
+/** One saved revision of a training's material. */
+export interface MateriVersion {
+  id: string;
+  version: number;
+  updatedBy: string;
+  updatedAt: string;
+  jumlahBab: number;
+  catatan: string;
+  /** The version currently live. */
+  current: boolean;
+}
+
+/** Mock revision history for a training, newest first. */
+export const MATERI_VERSIONS: MateriVersion[] = [
+  {
+    id: "v3",
+    version: 3,
+    updatedBy: "Admin QHSE",
+    updatedAt: "2026-07-20T04:00:00.000Z",
+    jumlahBab: 6,
+    catatan: "Tambah bab Cara Mengisi HIRADC & perbaikan matriks risiko.",
+    current: true,
+  },
+  {
+    id: "v2",
+    version: 2,
+    updatedBy: "Admin QHSE",
+    updatedAt: "2026-07-08T03:20:00.000Z",
+    jumlahBab: 5,
+    catatan: "Revisi contoh JSA menggoreng dan penambahan latihan.",
+    current: false,
+  },
+  {
+    id: "v1",
+    version: 1,
+    updatedBy: "Admin QHSE",
+    updatedAt: "2026-06-30T06:45:00.000Z",
+    jumlahBab: 4,
+    catatan: "Konversi awal dari dokumen DOCX.",
+    current: false,
+  },
+];
+
 /** A chapter produced by converting a DOCX — title plus its section headings. */
 export interface ConvertedChapter {
   id: string;
