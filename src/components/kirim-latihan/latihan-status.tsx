@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { FileText, MessageSquare } from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/status-badge";
-import { useReviews } from "@/hooks/use-reviews";
+import { useReviews, type ReviewMap } from "@/hooks/use-reviews";
 import { ADMIN_UPLOADS } from "@/lib/admin/latihan";
 import type { UploadStatus } from "@/lib/upload/types";
 import { cn } from "@/lib/utils";
@@ -50,13 +51,32 @@ function formatWaktu(iso: string): string {
  */
 export function LatihanStatus() {
   const { reviews } = useReviews();
+  const [apiReviews, setApiReviews] = useState<ReviewMap>({});
+
+  // Pull review decisions from the API (added in the backend phase); until it
+  // exists, the local review store still drives this view.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/review")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { reviews?: ReviewMap } | null) => {
+        if (alive && data?.reviews) setApiReviews(data.reviews);
+      })
+      .catch(() => {
+        // Endpoint not available yet — fall back to local reviews.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold tracking-tight">Riwayat & Status</h2>
       <ul className="flex flex-col gap-2">
         {MY_SUBMISSIONS.map((upload) => {
-          const review = reviews[upload.id];
+          // API decision wins, then the local store, then the mock default.
+          const review = apiReviews[upload.id] ?? reviews[upload.id];
           const status = review?.status ?? upload.status;
           const tone = STATUS_TONE[status];
           return (
