@@ -17,6 +17,50 @@ export interface TrainingModule {
   updated: string;
 }
 
+/** A chapter produced by converting a DOCX — title plus its section headings. */
+export interface ConvertedChapter {
+  id: string;
+  title: string;
+  sections: string[];
+}
+
+/**
+ * A sample conversion result, mirroring the JSA & HIRADC material, used to preview
+ * what a DOCX becomes before it's saved.
+ */
+export const CONVERSION_PREVIEW: ConvertedChapter[] = [
+  {
+    id: "pendahuluan",
+    title: "Pendahuluan",
+    sections: ["Makna Training", "Tujuan Training", "Kompetensi yang Dikuasai"],
+  },
+  {
+    id: "konsep-jsa",
+    title: "Konsep JSA",
+    sections: ["Apa itu JSA?", "Tujuan JSA"],
+  },
+  {
+    id: "konsep-hiradc",
+    title: "Konsep HIRADC",
+    sections: ["Apa itu HIRADC?", "Yang Dinilai HIRADC"],
+  },
+  {
+    id: "perbedaan",
+    title: "Perbedaan JSA & HIRADC",
+    sections: ["JSA vs HIRADC"],
+  },
+  {
+    id: "cara-mengisi-jsa",
+    title: "Cara Mengisi JSA",
+    sections: ["Bagian yang Diisi", "Tiga Kolom Utama", "Latihan JSA"],
+  },
+  {
+    id: "cara-mengisi-hiradc",
+    title: "Cara Mengisi HIRADC",
+    sections: ["Komponen HIRADC", "Enam Langkah Pengisian"],
+  },
+];
+
 export const TRAINING_MODULES: TrainingModule[] = [
   {
     id: "jsa-hiradc",
