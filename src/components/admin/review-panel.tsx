@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SelectNative } from "@/components/ui/select-native";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toaster";
+import { useReviews } from "@/hooks/use-reviews";
 import type { UploadStatus } from "@/lib/upload/types";
 
 const STATUS_OPTIONS: UploadStatus[] = [
@@ -25,6 +26,7 @@ const STATUS_OPTIONS: UploadStatus[] = [
  * status; save/notify wiring lands later.
  */
 export function ReviewPanel({
+  uploadId,
   initialStatus,
   initialComment = "",
 }: {
@@ -32,10 +34,16 @@ export function ReviewPanel({
   initialStatus: UploadStatus;
   initialComment?: string;
 }) {
-  const [status, setStatus] = useState<UploadStatus>(initialStatus);
-  const [comment, setComment] = useState(initialComment);
+  const { reviews, saveReview } = useReviews();
+  // A previously saved decision wins over the mock default.
+  const saved = reviews[uploadId];
+  const [status, setStatus] = useState<UploadStatus>(
+    saved?.status ?? initialStatus,
+  );
+  const [comment, setComment] = useState(saved?.comment ?? initialComment);
 
   function save() {
+    saveReview(uploadId, { status, comment });
     toast({
       title: "Tinjauan disimpan",
       description: `Status: ${status}`,

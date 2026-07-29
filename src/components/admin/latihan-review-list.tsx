@@ -13,6 +13,7 @@ import {
 import { FilePreviewDialog } from "@/components/admin/file-preview-dialog";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
+import { useReviews } from "@/hooks/use-reviews";
 import { ADMIN_UPLOADS, type AdminUpload } from "@/lib/admin/latihan";
 import { formatBytes } from "@/lib/upload/config";
 
@@ -45,6 +46,7 @@ function formatWaktu(iso: string): string {
  */
 export function LatihanReviewList() {
   const [index, setIndex] = useState<number | null>(null);
+  const { reviews } = useReviews();
 
   return (
     <div className="flex flex-col gap-3">
@@ -76,7 +78,9 @@ export function LatihanReviewList() {
               </button>
 
               <div className="flex items-center gap-2 sm:shrink-0">
-                <StatusBadge status={upload.status} />
+                <StatusBadge
+                  status={reviews[upload.id]?.status ?? upload.status}
+                />
                 <Button
                   variant="outline"
                   size="sm"
