@@ -3,15 +3,9 @@
 import { useState } from "react";
 import { Eye, FileSpreadsheet, FileText, Image as ImageIcon } from "lucide-react";
 
+import { FilePreviewDialog } from "@/components/admin/file-preview-dialog";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ADMIN_UPLOADS, type AdminUpload } from "@/lib/admin/latihan";
 import { formatBytes } from "@/lib/upload/config";
 
@@ -85,30 +79,7 @@ export function LatihanReviewList() {
         })}
       </ul>
 
-      <Dialog
-        open={preview !== null}
-        onOpenChange={(open) => !open && setPreview(null)}
-      >
-        <DialogContent>
-          {preview && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="truncate">{preview.fileName}</DialogTitle>
-                <DialogDescription>
-                  {preview.pesertaNama} · {preview.lokasi} ·{" "}
-                  {formatBytes(preview.fileSize)}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="bg-muted/40 text-muted-foreground flex min-h-64 items-center justify-center rounded-lg text-sm">
-                {preview.previewKind === "unsupported"
-                  ? "Format ini tidak bisa dipratinjau. Unduh untuk melihat."
-                  : "Pratinjau berkas akan tampil di sini."}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <FilePreviewDialog upload={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }

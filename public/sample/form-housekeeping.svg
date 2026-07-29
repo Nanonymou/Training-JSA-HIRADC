@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#f1f5f9"/>
+  <rect x="20" y="20" width="440" height="280" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="40" y="64" font-family="sans-serif" font-size="20" font-weight="bold" fill="#0f172a">Form JSA — Housekeeping</text>
+  <line x1="40" y1="84" x2="440" y2="84" stroke="#e2e8f0"/>
+  <text x="40" y="120" font-family="sans-serif" font-size="14" fill="#334155">Langkah 1: Menyiapkan APD</text>
+  <text x="40" y="150" font-family="sans-serif" font-size="14" fill="#334155">Langkah 2: Membersihkan area</text>
+  <text x="40" y="180" font-family="sans-serif" font-size="14" fill="#334155">Bahaya: Terpeleset, terkena bahan kimia</text>
+  <text x="40" y="210" font-family="sans-serif" font-size="14" fill="#334155">Pengendalian: Safety sign, sarung tangan</text>
+  <text x="40" y="270" font-family="sans-serif" font-size="12" fill="#64748b">Contoh unggahan peserta (gambar)</text>
+</svg>
