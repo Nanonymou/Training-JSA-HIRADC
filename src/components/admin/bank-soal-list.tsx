@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Copy, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import { SoalForm } from "@/components/admin/soal-form";
+import {
+  CATEGORY_ALL,
+  SoalCategorySelect,
+} from "@/components/admin/soal-category-select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +56,20 @@ export function BankSoalList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<SoalItem | null>(null);
   const [deleting, setDeleting] = useState<SoalItem | null>(null);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState(CATEGORY_ALL);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((item) => {
+      if (category !== CATEGORY_ALL && item.kategori !== category) return false;
+      if (!q) return true;
+      return (
+        item.soal.toLowerCase().includes(q) ||
+        item.pilihan.some((option) => option.toLowerCase().includes(q))
+      );
+    });
+  }, [items, query, category]);
 
   function openAdd() {
     setEditing(null);
@@ -103,16 +122,41 @@ export function BankSoalList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-muted-foreground text-sm">{items.length} soal</p>
-        <Button size="sm" onClick={openAdd}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative sm:flex-1">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Cari soal atau jawaban…"
+            aria-label="Cari soal"
+            className="pl-8"
+          />
+        </div>
+        <SoalCategorySelect
+          value={category}
+          onChange={setCategory}
+          includeAll
+          className="sm:w-48"
+          id="filter-kategori"
+        />
+        <Button size="sm" onClick={openAdd} className="sm:shrink-0">
           <Plus />
           Tambah Soal
         </Button>
       </div>
 
-      <ol className="flex flex-col gap-3">
-        {items.map((question, index) => (
+      <p className="text-muted-foreground text-xs">
+        Menampilkan {filtered.length} dari {items.length} soal.
+      </p>
+
+      {filtered.length === 0 ? (
+        <div className="border-border bg-card text-muted-foreground rounded-xl border px-4 py-12 text-center text-sm">
+          Tidak ada soal yang cocok.
+        </div>
+      ) : (
+        <ol className="flex flex-col gap-3">
+          {filtered.map((question, index) => (
           <li
             key={question.id}
             className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4"
@@ -183,9 +227,10 @@ export function BankSoalList() {
                 );
               })}
             </ul>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg">
