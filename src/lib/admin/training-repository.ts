@@ -128,6 +128,54 @@ export async function updateTraining(
   };
 }
 
+/**
+ * Archive or restore a training. Archiving also deactivates it so it can't be
+ * live while archived. Returns the updated row, or null if none matched.
+ */
+export async function setTrainingArchived(
+  id: string,
+  archived: boolean,
+): Promise<AdminTraining | null> {
+  const db = getDb();
+  const now = new Date();
+
+  if (!db) {
+    return {
+      id,
+      slug: id,
+      judul: "",
+      deskripsi: "",
+      aktif: false,
+      archived,
+      jumlahBab: 0,
+      updated: now.toISOString(),
+    };
+  }
+
+  const [row] = await db
+    .update(trainings)
+    .set({
+      archived,
+      // Archiving takes it offline; restoring leaves it inactive to re-enable.
+      ...(archived ? { aktif: false } : {}),
+      updatedAt: now,
+    })
+    .where(eq(trainings.id, id))
+    .returning();
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    aktif: row.aktif,
+    archived: row.archived,
+    jumlahBab: 0,
+    updated: row.updatedAt.toISOString(),
+  };
+}
+
 export async function getAdminTrainings(): Promise<AdminTraining[]> {
   const db = getDb();
   if (!db) {
