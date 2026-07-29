@@ -117,6 +117,10 @@ export const uploads = pgTable("uploads", {
   reviewedBy: text("reviewed_by"),
   /** When the status was last changed by an admin; null until reviewed. */
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  /** Peserta notification email state: Belum / Terkirim / Gagal. */
+  notifStatus: text("notif_status").notNull().default("Belum"),
+  /** When the notification email was last sent; null until sent. */
+  notifSentAt: timestamp("notif_sent_at", { withTimezone: true }),
   waktuUnggah: timestamp("waktu_unggah", { withTimezone: true })
     .notNull()
     .defaultNow(),

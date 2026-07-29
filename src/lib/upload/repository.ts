@@ -37,6 +37,8 @@ export async function saveUpload(input: NewUploadRow): Promise<UploadRow> {
     adminComment: input.adminComment ?? null,
     reviewedBy: null,
     reviewedAt: null,
+    notifStatus: "Belum",
+    notifSentAt: null,
     waktuUnggah: new Date(),
   };
 }
