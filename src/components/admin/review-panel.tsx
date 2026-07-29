@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,24 @@ export function ReviewPanel({
     saved?.status ?? initialStatus,
   );
   const [comment, setComment] = useState(saved?.comment ?? initialComment);
+  const [saving, setSaving] = useState(false);
 
-  function save() {
+  async function save() {
+    setSaving(true);
+    // Optimistic local save so the list/peserta view update immediately.
     saveReview(uploadId, { status, comment });
+    try {
+      // Persist to the review API (implemented in the backend phase); the local
+      // save above keeps this working before the endpoint exists.
+      await fetch("/api/admin/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uploadId, status, comment }),
+      });
+    } catch {
+      // Network error — the local save still holds.
+    }
+    setSaving(false);
     toast({
       title: "Tinjauan disimpan",
       description: `Status: ${status}`,
@@ -91,8 +106,13 @@ export function ReviewPanel({
         </p>
       </div>
 
-      <Button size="sm" onClick={save} className="self-start">
-        <Save />
+      <Button
+        size="sm"
+        onClick={save}
+        disabled={saving}
+        className="self-start"
+      >
+        {saving ? <Loader2 className="animate-spin" /> : <Save />}
         Simpan Tinjauan
       </Button>
     </div>
