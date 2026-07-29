@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, Mail, Send } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Mail,
+  Send,
+  TriangleAlert,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toaster";
@@ -39,14 +45,24 @@ export function EmailPreview({
 
   async function sendEmail() {
     setSend("sending");
-    // Simulate the send until the email API lands in the backend phase.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setSend("sent");
-    toast({
-      title: "Email terkirim",
-      description: pesertaEmail,
-      variant: "success",
-    });
+    try {
+      // Simulate the send until the email API lands in the backend phase; the
+      // backend call will throw on a non-OK response, hitting the catch below.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      setSend("sent");
+      toast({
+        title: "Email terkirim",
+        description: pesertaEmail,
+        variant: "success",
+      });
+    } catch {
+      setSend("error");
+      toast({
+        title: "Gagal mengirim email",
+        description: "Periksa koneksi lalu coba lagi.",
+        variant: "error",
+      });
+    }
   }
 
   return (
@@ -68,6 +84,12 @@ export function EmailPreview({
           <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="size-3.5" />
             Terkirim
+          </span>
+        )}
+        {send === "error" && (
+          <span className="text-destructive inline-flex items-center gap-1 text-xs font-medium">
+            <TriangleAlert className="size-3.5" />
+            Gagal
           </span>
         )}
       </div>
@@ -110,7 +132,11 @@ export function EmailPreview({
                 ) : (
                   <Send />
                 )}
-                {send === "sent" ? "Kirim Ulang" : "Kirim Email"}
+                {send === "sent"
+                  ? "Kirim Ulang"
+                  : send === "error"
+                    ? "Coba Lagi"
+                    : "Kirim Email"}
               </Button>
             </div>
           </div>
