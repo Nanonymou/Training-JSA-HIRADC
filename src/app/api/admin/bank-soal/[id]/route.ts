@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readAdminSession } from "@/lib/admin/auth";
-import { updateSoal } from "@/lib/admin/bank-soal-repository";
+import { deleteSoal, updateSoal } from "@/lib/admin/bank-soal-repository";
 import { coerceDraft, hasErrors, validateDraft } from "@/lib/admin/soal-draft";
 
 export const dynamic = "force-dynamic";
@@ -42,4 +42,23 @@ export async function PUT(
   });
 
   return NextResponse.json({ soal });
+}
+
+/**
+ * DELETE /api/admin/bank-soal/[id] — remove a question. Admin-only. Its options
+ * are removed too (cascade).
+ */
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const admin = await readAdminSession();
+  if (!admin) {
+    return NextResponse.json({ error: "Butuh login admin." }, { status: 403 });
+  }
+
+  const { id } = await context.params;
+  await deleteSoal(id);
+
+  return NextResponse.json({ ok: true });
 }

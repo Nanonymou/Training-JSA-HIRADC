@@ -72,3 +72,11 @@ export async function updateSoal(
 
   return { id, ...draft };
 }
+
+export async function deleteSoal(id: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+
+  // question_options cascade on the question's delete (onDelete: "cascade").
+  await db.delete(questions).where(eq(questions.id, id));
+}
