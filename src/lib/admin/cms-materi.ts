@@ -114,6 +114,11 @@ export function getActiveTraining(): TrainingModule | null {
   return TRAINING_MODULES.find((module) => module.aktif) ?? null;
 }
 
+/** All active trainings, for the peserta training selector. */
+export function getActiveTrainings(): TrainingModule[] {
+  return TRAINING_MODULES.filter((module) => module.aktif);
+}
+
 export const TRAINING_MODULES: TrainingModule[] = [
   {
     id: "jsa-hiradc",

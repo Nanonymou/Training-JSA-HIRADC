@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpen, Layers, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getActiveTrainings } from "@/lib/admin/cms-materi";
 
 /**
  * Landing page for the training portal.
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
  * later phases.
  */
 export default function Home() {
+  const trainings = getActiveTrainings();
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 py-16 text-center">
       <span className="bg-primary text-primary-foreground flex size-14 items-center justify-center rounded-2xl">
@@ -43,6 +46,37 @@ export default function Home() {
           </Link>
         </Button>
       </div>
+
+      {trainings.length > 0 && (
+        <div className="flex w-full max-w-2xl flex-col gap-3">
+          <p className="text-muted-foreground text-sm font-medium">
+            Pilih training
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {trainings.map((training) => (
+              <Link
+                key={training.id}
+                href="/materi"
+                className="bg-card border-border hover:border-primary/40 flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors"
+              >
+                <span className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg">
+                  <BookOpen className="size-4.5" />
+                </span>
+                <span className="text-sm font-semibold tracking-tight text-pretty">
+                  {training.judul}
+                </span>
+                <span className="text-muted-foreground line-clamp-2 text-xs text-pretty">
+                  {training.deskripsi}
+                </span>
+                <span className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-xs">
+                  <Layers className="size-3.5" />
+                  {training.jumlahBab} bab
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
