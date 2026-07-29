@@ -46,6 +46,41 @@ export interface LokasiStat {
   upload: number;
 }
 
+export interface TrendPoint {
+  /** ISO day (yyyy-mm-dd). */
+  date: string;
+  /** Cumulative peserta up to and including this day. */
+  peserta: number;
+  /** Cumulative peserta who passed the quiz. */
+  lulus: number;
+}
+
+/**
+ * Cumulative attendance/pass trend by day, derived from the records' waktuHadir.
+ * Ordered oldest to newest so it reads left to right as growth over time.
+ */
+export function getProgressTrend(): TrendPoint[] {
+  const perDay = new Map<string, { peserta: number; lulus: number }>();
+  for (const p of PESERTA_RECORDS) {
+    const day = p.waktuHadir.slice(0, 10);
+    const cur = perDay.get(day) ?? { peserta: 0, lulus: 0 };
+    cur.peserta += 1;
+    if (p.quizStatus === "Lulus") cur.lulus += 1;
+    perDay.set(day, cur);
+  }
+
+  let peserta = 0;
+  let lulus = 0;
+  return [...perDay.keys()]
+    .sort()
+    .map((date) => {
+      const day = perDay.get(date)!;
+      peserta += day.peserta;
+      lulus += day.lulus;
+      return { date, peserta, lulus };
+    });
+}
+
 /** Per-site tallies, one row per baku site (zero-filled when empty). */
 export function getLokasiStats(): LokasiStat[] {
   return LOKASI_OPTIONS.map((lokasi) => {
