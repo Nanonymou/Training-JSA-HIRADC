@@ -43,6 +43,28 @@ export const questionOptions = pgTable("question_options", {
 });
 
 /**
+ * A peserta record (PRD: PESERTA).
+ *
+ * The identity every activity is recorded against, captured when the Daftar Hadir
+ * is signed. Department defaults to QHSE; the system stamps waktu_hadir and (from
+ * the request) browser and ip.
+ */
+export const peserta = pgTable("peserta", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: text("training_id").notNull().default("jsa-hiradc"),
+  nama: text("nama").notNull(),
+  email: text("email").notNull(),
+  jabatan: text("jabatan").notNull(),
+  lokasi: text("lokasi").notNull(),
+  departemen: text("departemen").notNull().default("QHSE"),
+  browser: text("browser"),
+  ip: text("ip"),
+  waktuHadir: timestamp("waktu_hadir", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
  * A recorded quiz result (PRD: QUIZ_RECORD).
  *
  * One row per submitted attempt. The peserta's identity is denormalised here —
@@ -115,3 +137,5 @@ export type QuizAttemptRow = typeof quizAttempts.$inferSelect;
 export type NewQuizAttemptRow = typeof quizAttempts.$inferInsert;
 export type UploadRow = typeof uploads.$inferSelect;
 export type NewUploadRow = typeof uploads.$inferInsert;
+export type PesertaRow = typeof peserta.$inferSelect;
+export type NewPesertaRow = typeof peserta.$inferInsert;
