@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 
+import { LatihanStatus } from "@/components/kirim-latihan/latihan-status";
 import { UploadForm } from "@/components/kirim-latihan/upload-form";
 
 export const metadata: Metadata = {
@@ -48,6 +49,10 @@ export default function KirimLatihanPage() {
         </div>
 
         <UploadForm />
+
+        <div className="mt-8">
+          <LatihanStatus />
+        </div>
       </main>
     </div>
   );
