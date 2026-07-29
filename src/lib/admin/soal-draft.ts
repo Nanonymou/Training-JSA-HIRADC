@@ -1,0 +1,54 @@
+/**
+ * A quiz-question draft as the add/edit form produces it, plus its validation.
+ *
+ * Mirrors QUIZ_QUESTIONS (soal, four options, the correct index) so a draft can
+ * be saved into the bank unchanged. Validation is a pure function shared by the
+ * form and, later, a server route.
+ */
+
+export interface SoalDraft {
+  soal: string;
+  pilihan: string[];
+  kunci: number;
+}
+
+export const OPTION_COUNT = 4;
+
+export function emptyDraft(): SoalDraft {
+  return { soal: "", pilihan: Array(OPTION_COUNT).fill(""), kunci: 0 };
+}
+
+export interface SoalErrors {
+  soal?: string;
+  pilihan?: (string | undefined)[];
+  kunci?: string;
+}
+
+export function validateDraft(draft: SoalDraft): SoalErrors {
+  const errors: SoalErrors = {};
+
+  if (!draft.soal.trim()) errors.soal = "Pertanyaan wajib diisi.";
+
+  const optionErrors = draft.pilihan.map((option) =>
+    option.trim() ? undefined : "Wajib diisi.",
+  );
+  if (optionErrors.some(Boolean)) errors.pilihan = optionErrors;
+
+  if (
+    draft.kunci < 0 ||
+    draft.kunci >= draft.pilihan.length ||
+    !draft.pilihan[draft.kunci]?.trim()
+  ) {
+    errors.kunci = "Pilih jawaban benar yang sudah diisi.";
+  }
+
+  return errors;
+}
+
+export function hasErrors(errors: SoalErrors): boolean {
+  return Boolean(
+    errors.soal ||
+      errors.kunci ||
+      (errors.pilihan && errors.pilihan.some(Boolean)),
+  );
+}
