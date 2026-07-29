@@ -84,9 +84,11 @@ export function getProgressTrend(
 }
 
 /** Per-site tallies, one row per baku site (zero-filled when empty). */
-export function getLokasiStats(): LokasiStat[] {
+export function getLokasiStats(
+  source: PesertaRecord[] = PESERTA_RECORDS,
+): LokasiStat[] {
   return LOKASI_OPTIONS.map((lokasi) => {
-    const rows = PESERTA_RECORDS.filter((p) => p.lokasi === lokasi);
+    const rows = source.filter((p) => p.lokasi === lokasi);
     return {
       lokasi,
       peserta: rows.length,
