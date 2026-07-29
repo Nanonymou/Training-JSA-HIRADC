@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard } from "lucide-react";
+import { FileCheck2, LayoutDashboard } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { readAdminSession } from "@/lib/admin/auth";
@@ -44,10 +45,27 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="bg-card border-border text-muted-foreground rounded-xl border px-4 py-12 text-center text-sm">
-          Area terproteksi. Manajemen konten, bank soal, review latihan, dan
-          laporan akan hadir pada fase berikutnya.
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            href="/admin/latihan"
+            className="bg-card border-border hover:border-primary/40 flex items-center gap-3 rounded-xl border p-4 transition-colors"
+          >
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <FileCheck2 className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Review Latihan</p>
+              <p className="text-muted-foreground text-xs">
+                Tinjau &amp; pratinjau berkas peserta
+              </p>
+            </div>
+          </Link>
         </div>
+
+        <p className="text-muted-foreground mt-4 text-xs">
+          Manajemen konten, bank soal, dan laporan akan hadir pada fase
+          berikutnya.
+        </p>
       </main>
     </div>
   );
