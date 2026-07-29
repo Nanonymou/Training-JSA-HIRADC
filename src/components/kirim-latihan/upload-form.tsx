@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import {
-  CheckCircle2,
   FileSpreadsheet,
   FileText,
   Trash2,
@@ -13,6 +12,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "@/components/ui/toaster";
 import {
   ACCEPT_ATTR,
   formatBytes,
@@ -59,7 +59,6 @@ export function UploadForm() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [items, setItems] = useState<UploadItem[]>([]);
-  const [justSent, setJustSent] = useState<string | null>(null);
 
   function pick(file: File | undefined) {
     if (!file) return;
@@ -76,7 +75,6 @@ export function UploadForm() {
   function onDrop(event: React.DragEvent) {
     event.preventDefault();
     setDragging(false);
-    setJustSent(null);
     const dropped = event.dataTransfer.files;
     if (dropped.length > 1) {
       setSelected(null);
@@ -123,12 +121,20 @@ export function UploadForm() {
     setSelected(null);
     setUploading(false);
     setProgress(0);
-    setJustSent(item.name);
     if (inputRef.current) inputRef.current.value = "";
+    toast({
+      title: "Berkas berhasil dikirim",
+      description: item.name,
+      variant: "success",
+    });
   }
 
   function remove(id: string) {
+    const target = items.find((item) => item.id === id);
     setItems((current) => current.filter((item) => item.id !== id));
+    if (target) {
+      toast({ title: "Berkas dihapus", description: target.name, variant: "info" });
+    }
   }
 
   return (
@@ -151,10 +157,7 @@ export function UploadForm() {
           type="file"
           accept={ACCEPT_ATTR}
           className="sr-only"
-          onChange={(event) => {
-            setJustSent(null);
-            pick(event.target.files?.[0]);
-          }}
+          onChange={(event) => pick(event.target.files?.[0])}
         />
         <div className="flex flex-col items-center gap-3">
           <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-full">
@@ -237,15 +240,6 @@ export function UploadForm() {
               Unggah Sekarang
             </Button>
           )}
-        </div>
-      )}
-
-      {/* Success confirmation */}
-      {justSent && (
-        <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="size-4 shrink-0" />
-          Berkas <span className="font-medium">{justSent}</span> berhasil
-          dikirim.
         </div>
       )}
 
