@@ -7,6 +7,7 @@ import { getExtension } from "@/lib/upload/config";
 export const dynamic = "force-dynamic";
 
 const ALLOWED = ["docx", "doc"];
+const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
 
 /**
  * POST /api/admin/materi/upload — convert an uploaded DOCX into chapters.
@@ -38,19 +39,40 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (file.size === 0) {
+    return NextResponse.json({ error: "Berkas kosong." }, { status: 400 });
+  }
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json(
+      { error: "Ukuran melebihi batas 20 MB." },
+      { status: 413 },
+    );
+  }
 
+  let chapters: Awaited<ReturnType<typeof convertDocxFile>>;
   try {
-    const chapters = await convertDocxFile(file);
-    const sectionCount = chapters.reduce((sum, c) => sum + c.sections.length, 0);
-    return NextResponse.json({
-      chapters,
-      chapterCount: chapters.length,
-      sectionCount,
-    });
+    chapters = await convertDocxFile(file);
   } catch {
     return NextResponse.json(
       { error: "Gagal mengonversi dokumen. Pastikan format DOCX valid." },
       { status: 422 },
     );
   }
+
+  if (chapters.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Tidak ada bab terdeteksi. Gunakan Heading 1/2 untuk menandai bab.",
+      },
+      { status: 422 },
+    );
+  }
+
+  const sectionCount = chapters.reduce((sum, c) => sum + c.sections.length, 0);
+  return NextResponse.json({
+    chapters,
+    chapterCount: chapters.length,
+    sectionCount,
+  });
 }
