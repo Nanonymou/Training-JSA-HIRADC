@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -49,6 +50,7 @@ export function BankSoalList() {
   );
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<SoalItem | null>(null);
+  const [deleting, setDeleting] = useState<SoalItem | null>(null);
 
   function openAdd() {
     setEditing(null);
@@ -76,9 +78,11 @@ export function BankSoalList() {
     setEditing(null);
   }
 
-  function remove(item: SoalItem) {
-    setItems((current) => current.filter((i) => i.id !== item.id));
+  function confirmDelete() {
+    if (!deleting) return;
+    setItems((current) => current.filter((i) => i.id !== deleting.id));
     toast({ title: "Soal dihapus", variant: "info" });
+    setDeleting(null);
   }
 
   return (
@@ -120,7 +124,7 @@ export function BankSoalList() {
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Hapus soal ${index + 1}`}
-                  onClick={() => remove(question)}
+                  onClick={() => setDeleting(question)}
                 >
                   <Trash2 />
                 </Button>
@@ -174,6 +178,35 @@ export function BankSoalList() {
               onCancel={() => setFormOpen(false)}
               submitLabel={editing ? "Simpan Perubahan" : "Tambah Soal"}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleting !== null}
+        onOpenChange={(open) => !open && setDeleting(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Hapus soal?</DialogTitle>
+            <DialogDescription className="text-pretty">
+              Soal ini akan dihapus dari bank. Tindakan ini tidak bisa
+              dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          {deleting && (
+            <p className="text-foreground/90 bg-muted/40 rounded-lg px-3 py-2 text-sm text-pretty">
+              {deleting.soal}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setDeleting(null)}>
+              Batal
+            </Button>
+            <Button variant="destructive" size="sm" onClick={confirmDelete}>
+              <Trash2 />
+              Hapus
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
