@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { BookOpen, Layers, Plus } from "lucide-react";
 
+import { TrainingForm, type TrainingDraft } from "@/components/admin/training-form";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toaster";
 import { TRAINING_MODULES } from "@/lib/admin/cms-materi";
@@ -34,6 +41,31 @@ export function TrainingList() {
     })),
   );
 
+  const [formOpen, setFormOpen] = useState(false);
+
+  function addTraining(draft: TrainingDraft) {
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}`;
+    setItems((current) => [
+      {
+        id,
+        judul: draft.judul,
+        deskripsi: draft.deskripsi || "Belum ada deskripsi.",
+        aktif: false,
+        jumlahBab: 0,
+      },
+      ...current,
+    ]);
+    setFormOpen(false);
+    toast({
+      title: "Training ditambahkan",
+      description: draft.judul,
+      variant: "success",
+    });
+  }
+
   function toggle(id: string, aktif: boolean) {
     setItems((current) =>
       current.map((item) => (item.id === id ? { ...item, aktif } : item)),
@@ -52,7 +84,7 @@ export function TrainingList() {
         <p className="text-muted-foreground text-sm">
           {items.filter((i) => i.aktif).length} aktif dari {items.length} training
         </p>
-        <Button size="sm">
+        <Button size="sm" onClick={() => setFormOpen(true)}>
           <Plus />
           Tambah Training
         </Button>
@@ -90,6 +122,18 @@ export function TrainingList() {
           </li>
         ))}
       </ul>
+
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tambah Training</DialogTitle>
+          </DialogHeader>
+          <TrainingForm
+            onSubmit={addTraining}
+            onCancel={() => setFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
