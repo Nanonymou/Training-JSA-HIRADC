@@ -30,11 +30,21 @@ export function DashboardView() {
 
   const summary = useMemo(() => getDashboardSummary(rows), [rows]);
 
+  const focusLabel = lokasi === LOKASI_ALL ? "semua lokasi" : lokasi;
+
   return (
     <div className="flex flex-col gap-4">
-      <LokasiFilter id="dash-lokasi" value={lokasi} onChange={setLokasi} />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-sm">
+          Menampilkan data{" "}
+          <span className="text-foreground font-medium">{focusLabel}</span>.
+        </p>
+        <LokasiFilter id="dash-lokasi" value={lokasi} onChange={setLokasi} />
+      </div>
+
       <DashboardStats summary={summary} />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <LokasiBarChart activeLokasi={lokasi} />
         <ProgressLineChart rows={rows} />
       </div>
