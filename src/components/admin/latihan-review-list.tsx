@@ -37,12 +37,12 @@ function formatWaktu(iso: string): string {
  * files that can't be shown inline are flagged. Runs on mock data for now.
  */
 export function LatihanReviewList() {
-  const [preview, setPreview] = useState<AdminUpload | null>(null);
+  const [index, setIndex] = useState<number | null>(null);
 
   return (
     <div className="flex flex-col gap-3">
       <ul className="flex flex-col gap-2">
-        {ADMIN_UPLOADS.map((upload) => {
+        {ADMIN_UPLOADS.map((upload, position) => {
           const Icon = fileIcon(upload);
           return (
             <li
@@ -53,22 +53,27 @@ export function LatihanReviewList() {
                 <Icon className="size-5" />
               </span>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
+              {/* Filename opens the preview too, not just the button. */}
+              <button
+                type="button"
+                onClick={() => setIndex(position)}
+                className="focus-visible:ring-ring/50 min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-[3px]"
+              >
+                <span className="hover:text-primary block truncate text-sm font-medium transition-colors">
                   {upload.fileName}
-                </p>
-                <p className="text-muted-foreground truncate text-xs">
+                </span>
+                <span className="text-muted-foreground block truncate text-xs">
                   {upload.pesertaNama} · {upload.lokasi} ·{" "}
                   {formatBytes(upload.fileSize)} · {formatWaktu(upload.waktuUnggah)}
-                </p>
-              </div>
+                </span>
+              </button>
 
               <div className="flex items-center gap-2 sm:shrink-0">
                 <StatusBadge status={upload.status} />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPreview(upload)}
+                  onClick={() => setIndex(position)}
                 >
                   <Eye />
                   Pratinjau
@@ -79,7 +84,11 @@ export function LatihanReviewList() {
         })}
       </ul>
 
-      <FilePreviewDialog upload={preview} onClose={() => setPreview(null)} />
+      <FilePreviewDialog
+        uploads={ADMIN_UPLOADS}
+        index={index}
+        onIndexChange={setIndex}
+      />
     </div>
   );
 }
