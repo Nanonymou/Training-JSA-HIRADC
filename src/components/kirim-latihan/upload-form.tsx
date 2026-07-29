@@ -18,6 +18,7 @@ import {
   formatBytes,
   getExtension,
   MAX_UPLOAD_BYTES,
+  sizeRatio,
   validateUpload,
 } from "@/lib/upload/config";
 import type { UploadItem } from "@/lib/upload/types";
@@ -75,7 +76,14 @@ export function UploadForm() {
   function onDrop(event: React.DragEvent) {
     event.preventDefault();
     setDragging(false);
-    pick(event.dataTransfer.files[0]);
+    setJustSent(null);
+    const dropped = event.dataTransfer.files;
+    if (dropped.length > 1) {
+      setSelected(null);
+      setError("Kirim satu berkas saja.");
+      return;
+    }
+    pick(dropped[0]);
   }
 
   function upload() {
@@ -203,6 +211,18 @@ export function UploadForm() {
               </Button>
             )}
           </div>
+
+          {!uploading && (
+            <div className="flex flex-col gap-1">
+              <Progress
+                value={sizeRatio(selected.size)}
+                aria-label="Ukuran berkas terhadap batas"
+              />
+              <p className="text-muted-foreground text-xs tabular-nums">
+                {formatBytes(selected.size)} dari {formatBytes(MAX_UPLOAD_BYTES)}
+              </p>
+            </div>
+          )}
 
           {uploading ? (
             <div className="flex flex-col gap-1.5">

@@ -44,9 +44,17 @@ export function validateUpload(file: { name: string; size: number }): string | n
   if (!isAllowedExtension(ext)) {
     return "Format tidak didukung. Gunakan DOC, DOCX, XLS, XLSX, atau PDF.";
   }
-  if (file.size === 0) return "File kosong.";
+  if (file.size === 0) return "File kosong atau tidak terbaca.";
   if (file.size > MAX_UPLOAD_BYTES) {
-    return `Ukuran melebihi batas ${formatBytes(MAX_UPLOAD_BYTES)}.`;
+    // Name the actual size so the peserta knows how far over they are.
+    return `Ukuran ${formatBytes(file.size)} melebihi batas ${formatBytes(
+      MAX_UPLOAD_BYTES,
+    )}.`;
   }
   return null;
+}
+
+/** How much of the size limit a file uses, clamped to 0–1 (for a meter). */
+export function sizeRatio(bytes: number): number {
+  return Math.min(1, Math.max(0, bytes / MAX_UPLOAD_BYTES));
 }
