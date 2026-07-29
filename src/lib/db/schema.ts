@@ -42,6 +42,31 @@ export const questionOptions = pgTable("question_options", {
   position: integer("position").notNull().default(0),
 });
 
+/**
+ * A recorded quiz result (PRD: QUIZ_RECORD).
+ *
+ * One row per submitted attempt. The peserta's identity is denormalised here —
+ * name, email, job, and site — because the Daftar Hadir is a cookie session, not
+ * a peserta table yet; keeping the fields on the row lets the Data Peserta report
+ * aggregate results per site without a join. `score` is the percentage and
+ * `lulus` the pass/fail at submit time.
+ */
+export const quizAttempts = pgTable("quiz_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: text("training_id").notNull().default("jsa-hiradc"),
+  pesertaNama: text("peserta_nama").notNull(),
+  pesertaEmail: text("peserta_email").notNull(),
+  jabatan: text("jabatan"),
+  lokasi: text("lokasi"),
+  score: integer("score").notNull(),
+  correct: integer("correct").notNull(),
+  total: integer("total").notNull(),
+  lulus: boolean("lulus").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const questionsRelations = relations(questions, ({ many }) => ({
   options: many(questionOptions),
 }));
@@ -60,3 +85,5 @@ export type QuestionRow = typeof questions.$inferSelect;
 export type NewQuestionRow = typeof questions.$inferInsert;
 export type QuestionOptionRow = typeof questionOptions.$inferSelect;
 export type NewQuestionOptionRow = typeof questionOptions.$inferInsert;
+export type QuizAttemptRow = typeof quizAttempts.$inferSelect;
+export type NewQuizAttemptRow = typeof quizAttempts.$inferInsert;
