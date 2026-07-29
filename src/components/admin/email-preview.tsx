@@ -73,18 +73,27 @@ export function EmailPreview({
       </div>
 
       {shouldNotify(status) ? (
-        <div className="border-border overflow-hidden rounded-lg border">
-          <div className="bg-muted/40 flex flex-col gap-0.5 border-b px-3 py-2 text-xs">
-            <p>
-              <span className="text-muted-foreground">Kepada: </span>
-              <span className="font-medium">{pesertaEmail}</span>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Subjek: </span>
-              <span className="font-medium">{email.subject}</span>
-            </p>
+        <div className="border-border bg-background overflow-hidden rounded-lg border shadow-sm">
+          <div className="border-border bg-muted/40 flex items-center gap-2.5 border-b px-3 py-2.5">
+            <span className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full">
+              <Mail className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
+                Training JSA &amp; HIRADC
+              </p>
+              <p className="text-muted-foreground truncate text-xs">
+                no-reply@tpb.co.id
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col gap-2 px-3 py-3 text-sm">
+          <div className="border-border grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-b px-3 py-2 text-xs">
+            <span className="text-muted-foreground">Kepada</span>
+            <span className="min-w-0 truncate font-medium">{pesertaEmail}</span>
+            <span className="text-muted-foreground">Subjek</span>
+            <span className="min-w-0 truncate font-medium">{email.subject}</span>
+          </div>
+          <div className="flex flex-col gap-2 px-4 py-3 text-sm leading-relaxed">
             {email.body.map((line, index) => (
               <p key={index} className="text-foreground/90 text-pretty">
                 {line}
