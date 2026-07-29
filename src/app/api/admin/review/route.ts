@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readAdminSession } from "@/lib/admin/auth";
+import { notifyReviewDecision } from "@/lib/admin/notify-review";
 import { updateReview } from "@/lib/upload/repository";
 import type { UploadStatus } from "@/lib/upload/types";
 
@@ -55,5 +56,19 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, upload: result.row });
+  // Auto-notify the peserta when a decision is made. The DB path carries the
+  // peserta's address on the returned row; the dev path (no row) can't send, so
+  // the manual /api/admin/notifikasi route covers that case.
+  let notify = null;
+  if (result.row) {
+    notify = await notifyReviewDecision({
+      uploadId,
+      pesertaNama: result.row.pesertaNama,
+      pesertaEmail: result.row.pesertaEmail,
+      status,
+      comment: comment.trim(),
+    });
+  }
+
+  return NextResponse.json({ ok: true, upload: result.row, notify });
 }

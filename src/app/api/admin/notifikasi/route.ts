@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readAdminSession } from "@/lib/admin/auth";
-import { buildReviewEmail, shouldNotify } from "@/lib/admin/email-template";
-import { sendReviewEmail } from "@/lib/admin/email-service";
-import { updateNotifStatus } from "@/lib/upload/repository";
+import { notifyReviewDecision } from "@/lib/admin/notify-review";
 import type { UploadStatus } from "@/lib/upload/types";
 
 export const dynamic = "force-dynamic";
@@ -54,14 +52,21 @@ export async function POST(request: Request) {
   if (!VALID_STATUS.includes(status)) {
     return NextResponse.json({ error: "Status tidak dikenal." }, { status: 400 });
   }
-  if (!shouldNotify(status)) {
-    return NextResponse.json({ skipped: true, reason: "Status Pending tidak dikirim." });
+
+  const result = await notifyReviewDecision({
+    uploadId,
+    pesertaNama,
+    pesertaEmail,
+    status,
+    comment,
+  });
+
+  if (result.skipped) {
+    return NextResponse.json({
+      skipped: true,
+      reason: "Status Pending tidak dikirim.",
+    });
   }
-
-  const email = buildReviewEmail(pesertaNama, status, comment);
-  const result = await sendReviewEmail({ to: pesertaEmail, content: email });
-
-  await updateNotifStatus(uploadId, result.status, result.sentAt);
 
   if (result.status === "Gagal") {
     return NextResponse.json(
