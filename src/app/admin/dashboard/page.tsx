@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
-import { DashboardStats } from "@/components/admin/dashboard-stats";
+import { DashboardView } from "@/components/admin/dashboard-view";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default async function DashboardMonitoringPage() {
           </p>
         </div>
 
-        <DashboardStats />
+        <DashboardView />
       </main>
     </div>
   );

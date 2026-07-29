@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import { SummaryCard } from "@/components/admin/summary-card";
-import { getDashboardSummary } from "@/lib/admin/dashboard";
+import type { DashboardSummary } from "@/lib/admin/dashboard";
 
 interface Tile {
   label: string;
@@ -18,11 +18,10 @@ interface Tile {
 
 /**
  * The dashboard's headline row: total peserta, pass rate, average score, and
- * uploads — computed from the mock records and laid out as summary cards.
+ * uploads. Presentational — the caller supplies the computed summary, so it can
+ * be driven by dashboard state (e.g. a site filter).
  */
-export function DashboardStats() {
-  const summary = getDashboardSummary();
-
+export function DashboardStats({ summary }: { summary: DashboardSummary }) {
   const tiles: Tile[] = [
     {
       label: "Total Peserta",

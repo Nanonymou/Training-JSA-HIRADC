@@ -1,4 +1,4 @@
-import { PESERTA_RECORDS } from "@/lib/admin/peserta";
+import { PESERTA_RECORDS, type PesertaRecord } from "@/lib/admin/peserta";
 import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
 
 /**
@@ -18,13 +18,13 @@ export interface DashboardSummary {
   totalUpload: number;
 }
 
-export function getDashboardSummary(): DashboardSummary {
-  const totalPeserta = PESERTA_RECORDS.length;
-  const lulus = PESERTA_RECORDS.filter((p) => p.quizStatus === "Lulus").length;
-  const scored = PESERTA_RECORDS.filter((p) => p.quizScore !== null);
-  const totalUpload = PESERTA_RECORDS.filter(
-    (p) => p.uploadStatus === "Terkirim",
-  ).length;
+export function getDashboardSummary(
+  rows: PesertaRecord[] = PESERTA_RECORDS,
+): DashboardSummary {
+  const totalPeserta = rows.length;
+  const lulus = rows.filter((p) => p.quizStatus === "Lulus").length;
+  const scored = rows.filter((p) => p.quizScore !== null);
+  const totalUpload = rows.filter((p) => p.uploadStatus === "Terkirim").length;
 
   const rataNilai =
     scored.length === 0
