@@ -6,12 +6,12 @@ import {
   BookOpen,
   FileBarChart,
   FileCheck2,
-  LayoutDashboard,
+  Layers,
   ListChecks,
   Users,
 } from "lucide-react";
 
-import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminHeader } from "@/components/admin/admin-header";
 import { readAdminSession } from "@/lib/admin/auth";
 
 export const metadata: Metadata = {
@@ -31,18 +31,8 @@ export default async function AdminDashboardPage() {
   if (!session) redirect("/admin/login");
 
   return (
-    <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card border-border flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
-          <LayoutDashboard className="size-4.5" />
-        </span>
-        <span className="text-sm font-semibold tracking-tight">
-          Admin — Training JSA &amp; HIRADC
-        </span>
-        <div className="ml-auto">
-          <AdminLogoutButton />
-        </div>
-      </header>
+    <div className="app-surface flex min-h-dvh flex-col">
+      <AdminHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <div className="mb-6 flex flex-col gap-1">
@@ -143,12 +133,22 @@ export default async function AdminDashboardPage() {
               </p>
             </div>
           </Link>
-        </div>
 
-        <p className="text-muted-foreground mt-4 text-xs">
-          Manajemen konten, bank soal, dan laporan akan hadir pada fase
-          berikutnya.
-        </p>
+          <Link
+            href="/admin/training"
+            className="bg-card border-border hover:border-primary/40 flex items-center gap-3 rounded-xl border p-4 transition-colors"
+          >
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <Layers className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Multi-Training</p>
+              <p className="text-muted-foreground text-xs">
+                Kelola beberapa topik training
+              </p>
+            </div>
+          </Link>
+        </div>
       </main>
     </div>
   );

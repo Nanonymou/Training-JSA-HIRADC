@@ -12,7 +12,7 @@ import {
   exportPesertaPdf,
 } from "@/lib/admin/peserta-export";
 import { LOKASI_OPTIONS } from "@/lib/daftar-hadir/options";
-import { PESERTA_RECORDS, type PesertaRecord } from "@/lib/admin/peserta";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 import { cn } from "@/lib/utils";
 
 interface SiteRecap {
@@ -65,7 +65,11 @@ function formatTanggal(iso: string): string {
  * outcome, with a summary line. The period filter and table are the report's
  * core; export lands in a later task.
  */
-export function LaporanKelulusan() {
+export function LaporanKelulusan({
+  records,
+}: {
+  records: PesertaRecord[];
+}) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [query, setQuery] = useState("");
@@ -82,7 +86,7 @@ export function LaporanKelulusan() {
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return PESERTA_RECORDS.filter(
+    return records.filter(
       (p) =>
         withinPeriod(p.waktuHadir, from, to) &&
         (sites.length === 0 || sites.includes(p.lokasi)) &&
@@ -90,7 +94,7 @@ export function LaporanKelulusan() {
           p.nama.toLowerCase().includes(q) ||
           p.email.toLowerCase().includes(q)),
     );
-  }, [from, to, query, sites]);
+  }, [records, from, to, query, sites]);
 
   const lulus = rows.filter((p) => p.quizStatus === "Lulus").length;
   const recap = useMemo(() => recapBySite(rows), [rows]);

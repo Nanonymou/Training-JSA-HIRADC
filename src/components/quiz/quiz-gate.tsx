@@ -46,8 +46,34 @@ export function QuizGate() {
         questions={attempt}
         onExit={() => setStage("intro")}
         onSubmit={(answers) => {
-          setResult(gradeAttempt(attempt, answers, QUIZ_CONFIG.passingGrade));
+          const graded = gradeAttempt(
+            attempt,
+            answers,
+            QUIZ_CONFIG.passingGrade,
+          );
+          setResult(graded);
           setStage("submitted");
+          // Persist the attempt so the admin sees it. Best effort — a failure
+          // here won't affect what the peserta sees on the result screen.
+          // Include peserta identity from the client so recording still works
+          // when the server cookie has expired or is blocked.
+          void fetch("/api/quiz/record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              score: graded.score,
+              correct: graded.correct,
+              total: graded.total,
+              peserta: {
+                nama: peserta.nama,
+                email: peserta.email,
+                jabatan: peserta.jabatan,
+                lokasi: peserta.lokasi,
+              },
+            }),
+          }).catch(() => {
+            // ignore; peserta already sees their result
+          });
         }}
       />
     );

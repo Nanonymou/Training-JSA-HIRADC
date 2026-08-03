@@ -1,7 +1,16 @@
+import { eq } from "drizzle-orm";
+
 import { getDb } from "@/lib/db/client";
+import { questions, quizAttempts } from "@/lib/db/schema";
+import { ensureSeeded } from "@/lib/db/seed";
 import { shuffle } from "@/lib/quiz/attempt";
 import { QUIZ_CONFIG } from "@/lib/quiz/config";
 import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
+import {
+  DEFAULT_TRAINING_ID,
+  isDefaultTraining,
+  resolveTrainingId,
+} from "@/lib/training/scope";
 
 /**
  * Server-side access to the quiz question bank.
@@ -60,12 +69,24 @@ function seedRecords(): QuizQuestionRecord[] {
   }));
 }
 
-/** Every question with its options, from the DB or the seed fallback. */
-export async function getQuestionRecords(): Promise<QuizQuestionRecord[]> {
+/**
+ * Every question with its options for one training, from the DB or the seed
+ * fallback. The seed bank belongs to the default training, so a non-default
+ * scope returns nothing from the seed — matching the DB's per-training filter.
+ */
+export async function getQuestionRecords(
+  trainingId: string = DEFAULT_TRAINING_ID,
+): Promise<QuizQuestionRecord[]> {
+  const scope = resolveTrainingId(trainingId);
   const db = getDb();
-  if (!db) return seedRecords();
+  if (!db) return isDefaultTraining(scope) ? seedRecords() : [];
 
-  const rows = await db.query.questions.findMany({ with: { options: true } });
+  await ensureSeeded();
+
+  const rows = await db.query.questions.findMany({
+    where: eq(questions.trainingId, scope),
+    with: { options: true },
+  });
   return rows.map((row) => ({
     id: row.id,
     soal: row.soal,
@@ -86,8 +107,9 @@ export async function getQuestionRecords(): Promise<QuizQuestionRecord[]> {
  */
 export async function getRandomQuizQuestions(
   count: number,
+  trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<PublicQuizQuestion[]> {
-  const records = await getQuestionRecords();
+  const records = await getQuestionRecords(trainingId);
   return shuffle(records)
     .slice(0, count)
     .map((question) => ({
@@ -126,8 +148,9 @@ export interface GradeOutcome {
  */
 export async function gradeSubmission(
   answers: SubmittedAnswer[],
+  trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<GradeOutcome> {
-  const records = await getQuestionRecords();
+  const records = await getQuestionRecords(trainingId);
 
   const optionsById = new Map<
     string,
@@ -159,4 +182,41 @@ export async function gradeSubmission(
     lulus: score >= QUIZ_CONFIG.passingGrade,
     passingGrade: QUIZ_CONFIG.passingGrade,
   };
+}
+
+/** The peserta a quiz attempt belongs to (from the Daftar Hadir session). */
+export interface AttemptPeserta {
+  nama: string;
+  email: string;
+  jabatan?: string;
+  lokasi?: string;
+}
+
+/**
+ * Persist a graded attempt (if a database is configured) so the admin's reports
+ * and Data Peserta reflect real quiz results. Best effort — never throws.
+ */
+export async function saveQuizAttempt(
+  peserta: AttemptPeserta,
+  outcome: GradeOutcome,
+  trainingId: string = DEFAULT_TRAINING_ID,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+
+  try {
+    await db.insert(quizAttempts).values({
+      trainingId: resolveTrainingId(trainingId),
+      pesertaNama: peserta.nama,
+      pesertaEmail: peserta.email,
+      jabatan: peserta.jabatan,
+      lokasi: peserta.lokasi,
+      score: outcome.score,
+      correct: outcome.correct,
+      total: outcome.total,
+      lulus: outcome.lulus,
+    });
+  } catch (error) {
+    console.error("[quiz] gagal menyimpan attempt:", error);
+  }
 }

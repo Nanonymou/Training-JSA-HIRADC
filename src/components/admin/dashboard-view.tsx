@@ -7,25 +7,24 @@ import { LokasiBarChart } from "@/components/admin/lokasi-bar-chart";
 import { LOKASI_ALL, LokasiFilter } from "@/components/admin/lokasi-filter";
 import { ProgressLineChart } from "@/components/admin/progress-line-chart";
 import { getDashboardSummary } from "@/lib/admin/dashboard";
-import { PESERTA_RECORDS } from "@/lib/admin/peserta";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 
 /**
  * The interactive monitoring dashboard.
  *
  * Holds the site filter and recomputes the summary from it, so the headline
  * cards react to the selected location (Semua = all sites). Everything derives
- * from the mock records through the shared aggregate helper; the cards stay
- * presentational.
+ * from the DB-backed records passed in through the shared aggregate helper.
  */
-export function DashboardView() {
+export function DashboardView({ records }: { records: PesertaRecord[] }) {
   const [lokasi, setLokasi] = useState(LOKASI_ALL);
 
   const rows = useMemo(
     () =>
       lokasi === LOKASI_ALL
-        ? PESERTA_RECORDS
-        : PESERTA_RECORDS.filter((p) => p.lokasi === lokasi),
-    [lokasi],
+        ? records
+        : records.filter((p) => p.lokasi === lokasi),
+    [records, lokasi],
   );
 
   const summary = useMemo(() => getDashboardSummary(rows), [rows]);
@@ -45,7 +44,7 @@ export function DashboardView() {
       <DashboardStats summary={summary} />
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <LokasiBarChart activeLokasi={lokasi} />
+        <LokasiBarChart activeLokasi={lokasi} records={records} />
         <ProgressLineChart rows={rows} />
       </div>
     </div>

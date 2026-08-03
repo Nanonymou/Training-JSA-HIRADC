@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, Clock, GraduationCap } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { SectionView } from "@/components/materi/blocks/section-view";
@@ -78,14 +79,20 @@ export function ChapterArticle({
           <ArrowLeft />
           Sebelumnya
         </Button>
-        <Button
-          size="sm"
-          onClick={() => nextId && onNavigate(nextId)}
-          disabled={!nextId}
-        >
-          Selanjutnya
-          <ArrowRight />
-        </Button>
+        {nextId ? (
+          <Button size="sm" onClick={() => onNavigate(nextId)}>
+            Selanjutnya
+            <ArrowRight />
+          </Button>
+        ) : (
+          // Last chapter: materi is complete — send the peserta on to the Quiz.
+          <Button size="sm" asChild>
+            <Link href="/quiz">
+              <GraduationCap />
+              Lanjut ke Quiz
+            </Link>
+          </Button>
+        )}
       </footer>
     </motion.article>
   );

@@ -47,6 +47,12 @@ export function MateriVersionHistory() {
         <p className="text-sm font-semibold tracking-tight">Riwayat Versi</p>
       </div>
 
+      {MATERI_VERSIONS.length === 0 && (
+        <p className="text-muted-foreground py-6 text-center text-sm">
+          Belum ada versi. Unggah materi untuk membuat versi pertama.
+        </p>
+      )}
+
       <ol className="flex flex-col">
         {MATERI_VERSIONS.map((version, index) => {
           const isLast = index === MATERI_VERSIONS.length - 1;

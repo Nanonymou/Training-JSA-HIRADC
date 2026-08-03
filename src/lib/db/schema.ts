@@ -1,12 +1,21 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  customType,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+/** Postgres bytea column mapped as a Node Buffer. */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 /**
  * Database schema — quiz question bank.
@@ -24,6 +33,8 @@ export const questions = pgTable("questions", {
   id: uuid("id").primaryKey().defaultRandom(),
   trainingId: text("training_id").notNull().default("jsa-hiradc"),
   soal: text("soal").notNull(),
+  /** Question category, for filtering the bank (e.g. JSA, HIRADC). */
+  category: text("category").notNull().default("Umum"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -40,6 +51,28 @@ export const questionOptions = pgTable("question_options", {
   isCorrect: boolean("is_correct").notNull().default(false),
   /** Authoring order; the UI shuffles at attempt time, not here. */
   position: integer("position").notNull().default(0),
+});
+
+/**
+ * A peserta record (PRD: PESERTA).
+ *
+ * The identity every activity is recorded against, captured when the Daftar Hadir
+ * is signed. Department defaults to QHSE; the system stamps waktu_hadir and (from
+ * the request) browser and ip.
+ */
+export const peserta = pgTable("peserta", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: text("training_id").notNull().default("jsa-hiradc"),
+  nama: text("nama").notNull(),
+  email: text("email").notNull(),
+  jabatan: text("jabatan").notNull(),
+  lokasi: text("lokasi").notNull(),
+  departemen: text("departemen").notNull().default("QHSE"),
+  browser: text("browser"),
+  ip: text("ip"),
+  waktuHadir: timestamp("waktu_hadir", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 /**
@@ -86,15 +119,109 @@ export const uploads = pgTable("uploads", {
   fileSize: integer("file_size").notNull(),
   fileExt: text("file_ext").notNull(),
   urlBerkas: text("url_berkas").notNull(),
+  /**
+   * Raw file bytes stored in Postgres, used as a fallback download source when
+   * Vercel Blob isn't configured. Null when the file lives on Blob (urlBerkas
+   * is a public https URL). Excluded from list queries to keep responses small.
+   */
+  fileData: bytea("file_data"),
   status: text("status").notNull().default("Pending"),
   adminComment: text("admin_comment"),
+  /** Admin who last set the status (email), null until first reviewed. */
+  reviewedBy: text("reviewed_by"),
+  /** When the status was last changed by an admin; null until reviewed. */
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  /** Peserta notification email state: Belum / Terkirim / Gagal. */
+  notifStatus: text("notif_status").notNull().default("Belum"),
+  /** When the notification email was last sent; null until sent. */
+  notifSentAt: timestamp("notif_sent_at", { withTimezone: true }),
   waktuUnggah: timestamp("waktu_unggah", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
 
+/**
+ * Training topics (PRD: TRAININGS) for the multi-training CMS.
+ */
+export const trainings = pgTable("trainings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Stable slug that scopes content to this training. Matches the `training_id`
+   * text columns on questions/peserta/uploads/quiz_attempts (default
+   * "jsa-hiradc"), so a training row and its content share one key.
+   */
+  slug: text("slug").notNull().unique(),
+  judul: text("judul").notNull(),
+  deskripsi: text("deskripsi").notNull().default(""),
+  aktif: boolean("aktif").notNull().default(false),
+  archived: boolean("archived").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * A saved revision of a training's material (version history).
+ *
+ * Each converted DOCX / edit is a version; exactly one per training is `current`.
+ */
+export const materiVersions = pgTable("materi_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  trainingId: uuid("training_id")
+    .notNull()
+    .references(() => trainings.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  catatan: text("catatan").notNull().default(""),
+  updatedBy: text("updated_by"),
+  isCurrent: boolean("is_current").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * A chapter of a material version. The sections (headings + variant + content)
+ * are stored as JSON since their shape is nested and read as a unit.
+ */
+export const materiChapters = pgTable("materi_chapters", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  versionId: uuid("version_id")
+    .notNull()
+    .references(() => materiVersions.id, { onDelete: "cascade" }),
+  position: integer("position").notNull().default(0),
+  title: text("title").notNull(),
+  summary: text("summary").notNull().default(""),
+  minutes: integer("minutes").notNull().default(0),
+  sections: jsonb("sections").$type<unknown[]>().notNull().default([]),
+});
+
 export const questionsRelations = relations(questions, ({ many }) => ({
   options: many(questionOptions),
+}));
+
+export const trainingsRelations = relations(trainings, ({ many }) => ({
+  versions: many(materiVersions),
+}));
+
+export const materiVersionsRelations = relations(
+  materiVersions,
+  ({ one, many }) => ({
+    training: one(trainings, {
+      fields: [materiVersions.trainingId],
+      references: [trainings.id],
+    }),
+    chapters: many(materiChapters),
+  }),
+);
+
+export const materiChaptersRelations = relations(materiChapters, ({ one }) => ({
+  version: one(materiVersions, {
+    fields: [materiChapters.versionId],
+    references: [materiVersions.id],
+  }),
 }));
 
 export const questionOptionsRelations = relations(
@@ -115,3 +242,11 @@ export type QuizAttemptRow = typeof quizAttempts.$inferSelect;
 export type NewQuizAttemptRow = typeof quizAttempts.$inferInsert;
 export type UploadRow = typeof uploads.$inferSelect;
 export type NewUploadRow = typeof uploads.$inferInsert;
+export type PesertaRow = typeof peserta.$inferSelect;
+export type NewPesertaRow = typeof peserta.$inferInsert;
+export type TrainingRow = typeof trainings.$inferSelect;
+export type NewTrainingRow = typeof trainings.$inferInsert;
+export type MateriVersionRow = typeof materiVersions.$inferSelect;
+export type NewMateriVersionRow = typeof materiVersions.$inferInsert;
+export type MateriChapterRow = typeof materiChapters.$inferSelect;
+export type NewMateriChapterRow = typeof materiChapters.$inferInsert;
