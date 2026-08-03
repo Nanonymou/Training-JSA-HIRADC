@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  customType,
   integer,
   jsonb,
   pgTable,
@@ -8,6 +9,13 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+/** Postgres bytea column mapped as a Node Buffer. */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 /**
  * Database schema — quiz question bank.
@@ -111,6 +119,12 @@ export const uploads = pgTable("uploads", {
   fileSize: integer("file_size").notNull(),
   fileExt: text("file_ext").notNull(),
   urlBerkas: text("url_berkas").notNull(),
+  /**
+   * Raw file bytes stored in Postgres, used as a fallback download source when
+   * Vercel Blob isn't configured. Null when the file lives on Blob (urlBerkas
+   * is a public https URL). Excluded from list queries to keep responses small.
+   */
+  fileData: bytea("file_data"),
   status: text("status").notNull().default("Pending"),
   adminComment: text("admin_comment"),
   /** Admin who last set the status (email), null until first reviewed. */

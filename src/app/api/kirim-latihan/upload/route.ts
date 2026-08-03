@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readPesertaSession } from "@/lib/daftar-hadir/session";
 import { getExtension, validateUpload } from "@/lib/upload/config";
-import { saveUpload } from "@/lib/upload/repository";
+import { saveUpload, setUploadUrl } from "@/lib/upload/repository";
 import { storeUploadFile } from "@/lib/upload/storage";
 import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
@@ -59,6 +59,11 @@ export async function POST(request: Request) {
 
   try {
     const stored = await storeUploadFile(file);
+    // Placeholder URL for the bytes case — we replace it with the download route
+    // once the row's id is known.
+    const urlBerkas = stored.kind === "blob" ? stored.url : "";
+    const fileData = stored.kind === "bytes" ? stored.bytes : undefined;
+
     const upload = await saveUpload({
       trainingId: DEFAULT_TRAINING_ID,
       pesertaNama: nama,
@@ -67,9 +72,17 @@ export async function POST(request: Request) {
       fileName: file.name,
       fileSize: file.size,
       fileExt: getExtension(file.name),
-      urlBerkas: stored.url,
+      urlBerkas,
       status: "Pending",
+      fileData,
     });
+
+    // For the bytes case, resolve the URL to the download route now that we
+    // have the row id, and persist that as `urlBerkas` for callers to link to.
+    if (stored.kind === "bytes") {
+      upload.urlBerkas = `/api/uploads/${upload.id}/download`;
+      await setUploadUrl(upload.id, upload.urlBerkas);
+    }
 
     return NextResponse.json({ upload }, { status: 201 });
   } catch (error) {

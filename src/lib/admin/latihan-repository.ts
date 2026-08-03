@@ -28,6 +28,35 @@ function previewKindFor(ext: string): PreviewKind {
   return "unsupported";
 }
 
+/**
+ * Resolve the stored URL to something the browser can actually fetch. Blob URLs
+ * are absolute https and pass through; older rows may still carry the dev
+ * placeholder (`/_dev-blob/...`), so route those to the download endpoint —
+ * which returns 404 with a readable message if the bytes aren't there instead
+ * of a bare "page not found".
+ */
+function resolveUploadUrl(id: string, urlBerkas: string): string {
+  if (urlBerkas.startsWith("http://") || urlBerkas.startsWith("https://")) {
+    return urlBerkas;
+  }
+  return `/api/uploads/${id}/download`;
+}
+
+/** Columns we ever return from a read — never the heavy `fileData` bytes. */
+const UPLOAD_COLS = {
+  id: uploads.id,
+  pesertaNama: uploads.pesertaNama,
+  pesertaEmail: uploads.pesertaEmail,
+  lokasi: uploads.lokasi,
+  fileName: uploads.fileName,
+  fileExt: uploads.fileExt,
+  fileSize: uploads.fileSize,
+  urlBerkas: uploads.urlBerkas,
+  status: uploads.status,
+  waktuUnggah: uploads.waktuUnggah,
+  trainingId: uploads.trainingId,
+};
+
 export async function getReviewUploads(
   trainingId: string = DEFAULT_TRAINING_ID,
 ): Promise<AdminUpload[]> {
@@ -38,7 +67,7 @@ export async function getReviewUploads(
   }
 
   const rows = await db
-    .select()
+    .select(UPLOAD_COLS)
     .from(uploads)
     .where(eq(uploads.trainingId, scope))
     .orderBy(desc(uploads.waktuUnggah));
@@ -51,7 +80,7 @@ export async function getReviewUploads(
     fileName: row.fileName,
     fileExt: row.fileExt,
     fileSize: row.fileSize,
-    url: row.urlBerkas,
+    url: resolveUploadUrl(row.id, row.urlBerkas),
     status: row.status as AdminUpload["status"],
     waktuUnggah: row.waktuUnggah.toISOString(),
     previewKind: previewKindFor(row.fileExt),
@@ -66,7 +95,7 @@ export async function getReviewUploadById(
   if (!db) return ADMIN_UPLOADS.find((u) => u.id === id) ?? null;
 
   const [row] = await db
-    .select()
+    .select(UPLOAD_COLS)
     .from(uploads)
     .where(eq(uploads.id, id))
     .limit(1);
@@ -80,7 +109,7 @@ export async function getReviewUploadById(
     fileName: row.fileName,
     fileExt: row.fileExt,
     fileSize: row.fileSize,
-    url: row.urlBerkas,
+    url: resolveUploadUrl(row.id, row.urlBerkas),
     status: row.status as AdminUpload["status"],
     waktuUnggah: row.waktuUnggah.toISOString(),
     previewKind: previewKindFor(row.fileExt),

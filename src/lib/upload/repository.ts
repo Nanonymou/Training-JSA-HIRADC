@@ -5,17 +5,41 @@ import { uploads, type NewUploadRow, type UploadRow } from "@/lib/db/schema";
 import type { UploadStatus } from "@/lib/upload/types";
 import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
+/** Upload row without the heavy `fileData` bytes — the shape callers get back. */
+export type UploadSummary = Omit<UploadRow, "fileData">;
+
 /**
  * Server-side persistence for latihan uploads.
  *
  * Inserts into the uploads table when the database is configured; without one it
  * returns a synthetic row so the endpoint still responds with a record in dev.
+ * The `fileData` bytes column is set on insert but never returned to callers.
  * Server-only.
  */
-export async function saveUpload(input: NewUploadRow): Promise<UploadRow> {
+export async function saveUpload(input: NewUploadRow): Promise<UploadSummary> {
   const db = getDb();
   if (db) {
-    const [row] = await db.insert(uploads).values(input).returning();
+    const [row] = await db
+      .insert(uploads)
+      .values(input)
+      .returning({
+        id: uploads.id,
+        trainingId: uploads.trainingId,
+        pesertaNama: uploads.pesertaNama,
+        pesertaEmail: uploads.pesertaEmail,
+        lokasi: uploads.lokasi,
+        fileName: uploads.fileName,
+        fileSize: uploads.fileSize,
+        fileExt: uploads.fileExt,
+        urlBerkas: uploads.urlBerkas,
+        status: uploads.status,
+        adminComment: uploads.adminComment,
+        reviewedBy: uploads.reviewedBy,
+        reviewedAt: uploads.reviewedAt,
+        notifStatus: uploads.notifStatus,
+        notifSentAt: uploads.notifSentAt,
+        waktuUnggah: uploads.waktuUnggah,
+      });
     return row;
   }
 
@@ -41,6 +65,13 @@ export async function saveUpload(input: NewUploadRow): Promise<UploadRow> {
     notifSentAt: null,
     waktuUnggah: new Date(),
   };
+}
+
+/** Update just the download URL on an upload row (used after bytes-fallback insert). */
+export async function setUploadUrl(id: string, url: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db.update(uploads).set({ urlBerkas: url }).where(eq(uploads.id, id));
 }
 
 export interface ReviewUpdate {
