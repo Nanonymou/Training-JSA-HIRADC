@@ -22,6 +22,7 @@ import {
   validateUpload,
 } from "@/lib/upload/config";
 import type { UploadItem } from "@/lib/upload/types";
+import { usePeserta } from "@/hooks/use-peserta";
 import { cn } from "@/lib/utils";
 
 /** Spreadsheet vs document icon by extension. */
@@ -52,6 +53,7 @@ function formatWaktu(iso: string): string {
 export function UploadForm() {
   const reduceMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { peserta } = usePeserta();
 
   const [selected, setSelected] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +95,12 @@ export function UploadForm() {
     // XMLHttpRequest (not fetch) so the progress bar tracks the real upload.
     const form = new FormData();
     form.append("file", selected);
+    // Include peserta identity as a fallback in case the server cookie is gone.
+    if (peserta) {
+      form.append("nama", peserta.nama);
+      form.append("email", peserta.email);
+      form.append("lokasi", peserta.lokasi);
+    }
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/kirim-latihan/upload");

@@ -17,13 +17,7 @@ export const dynamic = "force-dynamic";
  * the created record.
  */
 export async function POST(request: Request) {
-  const peserta = await readPesertaSession();
-  if (!peserta) {
-    return NextResponse.json(
-      { error: "Isi daftar hadir dulu sebelum mengunggah." },
-      { status: 403 },
-    );
-  }
+  const cookiePeserta = await readPesertaSession();
 
   let form: FormData;
   try {
@@ -43,6 +37,21 @@ export async function POST(request: Request) {
     );
   }
 
+  // Peserta identity — prefer the signed cookie, fall back to the form fields
+  // (the client keeps a copy in localStorage; the cookie may have expired).
+  const asString = (v: FormDataEntryValue | null) =>
+    typeof v === "string" ? v.trim() : "";
+  const nama = cookiePeserta?.nama ?? asString(form.get("nama"));
+  const email = cookiePeserta?.email ?? asString(form.get("email"));
+  const lokasi = cookiePeserta?.lokasi ?? asString(form.get("lokasi"));
+
+  if (!nama || !email) {
+    return NextResponse.json(
+      { error: "Identitas peserta tidak lengkap. Isi daftar hadir dulu." },
+      { status: 403 },
+    );
+  }
+
   const invalid = validateUpload({ name: file.name, size: file.size });
   if (invalid) {
     return NextResponse.json({ error: invalid }, { status: 400 });
@@ -52,9 +61,9 @@ export async function POST(request: Request) {
     const stored = await storeUploadFile(file);
     const upload = await saveUpload({
       trainingId: DEFAULT_TRAINING_ID,
-      pesertaNama: peserta.nama,
-      pesertaEmail: peserta.email,
-      lokasi: peserta.lokasi,
+      pesertaNama: nama,
+      pesertaEmail: email,
+      lokasi,
       fileName: file.name,
       fileSize: file.size,
       fileExt: getExtension(file.name),

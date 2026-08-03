@@ -10,22 +10,18 @@ export const dynamic = "force-dynamic";
  * POST /api/quiz/record — persist a client-graded quiz result.
  *
  * The quiz is graded on the client (options are shuffled per-attempt, so the
- * kunci lives with the attempt). This endpoint records the outcome against the
- * signed-in peserta so the admin's Data Peserta / Laporan / Dashboard can see
- * that the attempt happened. Body: { score, correct, total }. `lulus` is derived
- * server-side from the configured passing grade.
+ * kunci lives with the attempt). This endpoint records the outcome so the admin's
+ * Data Peserta / Laporan / Dashboard can see that the attempt happened.
  *
- * Peserta session required (from Daftar Hadir).
+ * Body: { score, correct, total, peserta?: { nama, email, jabatan, lokasi } }.
+ * Peserta identity prefers the signed Daftar Hadir cookie, falling back to the
+ * body — this training portal is intentionally un-authenticated (anyone can
+ * register any name via Daftar Hadir), so accepting the identity from the client
+ * is no weaker than the existing flow and covers the case where the cookie
+ * expired or was blocked while the client still knows who the peserta is.
+ * `lulus` is derived server-side from the configured passing grade.
  */
 export async function POST(request: Request) {
-  const peserta = await readPesertaSession();
-  if (!peserta) {
-    return NextResponse.json(
-      { error: "Isi daftar hadir dulu." },
-      { status: 403 },
-    );
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -49,14 +45,25 @@ export async function POST(request: Request) {
     );
   }
 
+  const cookiePeserta = await readPesertaSession();
+  const bodyPeserta = (source.peserta ?? {}) as Record<string, unknown>;
+  const asString = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+  const nama = cookiePeserta?.nama ?? asString(bodyPeserta.nama);
+  const email = cookiePeserta?.email ?? asString(bodyPeserta.email);
+  const jabatan = cookiePeserta?.jabatan ?? asString(bodyPeserta.jabatan);
+  const lokasi = cookiePeserta?.lokasi ?? asString(bodyPeserta.lokasi);
+
+  if (!nama || !email) {
+    return NextResponse.json(
+      { error: "Identitas peserta tidak lengkap. Isi daftar hadir dulu." },
+      { status: 400 },
+    );
+  }
+
   const passingGrade = QUIZ_CONFIG.passingGrade;
   await saveQuizAttempt(
-    {
-      nama: peserta.nama,
-      email: peserta.email,
-      jabatan: peserta.jabatan,
-      lokasi: peserta.lokasi,
-    },
+    { nama, email, jabatan, lokasi },
     {
       total: Math.round(total),
       correct: Math.round(correct),
