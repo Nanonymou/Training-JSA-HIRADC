@@ -18,8 +18,16 @@ export interface QuizAttemptQuestion {
   soal: string;
   /** Option texts in shuffled order. */
   pilihan: string[];
-  /** Index of the correct option within the shuffled `pilihan`. */
-  kunciIndex: number;
+  /**
+   * Stable option ids parallel to `pilihan`, used to identify the chosen answer
+   * when the attempt was drawn from the server (grading happens server-side).
+   */
+  optionIds?: string[];
+  /**
+   * Index of the correct option within the shuffled `pilihan`. Present only for
+   * client-graded attempts (seed fallback); absent for server-drawn attempts.
+   */
+  kunciIndex?: number;
 }
 
 /** Fisher–Yates shuffle; returns a new array, leaving the input untouched. */

@@ -33,23 +33,19 @@ function parseAnswers(body: unknown): SubmittedAnswer[] | null {
 }
 
 /**
- * POST /api/quiz/submit — grade a submitted attempt.
+ * POST /api/quiz/submit — grade a submitted attempt and record it.
  *
- * Body: { answers: { questionId, optionId }[] }. Grading is done server-side by
- * option id against the stored bank, returning the score and pass/fail. The
- * client is never trusted to say what's correct.
+ * Body: { answers: { questionId, optionId }[], peserta?: { nama, email, ... } }.
+ * Grading is server-side by option id against the stored bank; the client is
+ * never trusted to say what's correct. The attempt is saved to quiz_attempts so
+ * the admin's Data Peserta / Laporan / Dashboard reflect it.
  *
- * Gated: requires a signed Daftar Hadir (peserta session).
+ * Peserta identity prefers the signed Daftar Hadir cookie, falling back to the
+ * body — the cookie can expire (8h) or be blocked while the client's
+ * localStorage copy still knows who the peserta is. Same trust level as Daftar
+ * Hadir itself (un-authenticated training portal).
  */
 export async function POST(request: Request) {
-  const peserta = await readPesertaSession();
-  if (!peserta) {
-    return NextResponse.json(
-      { error: "Akses quiz terkunci. Isi daftar hadir dulu." },
-      { status: 403 },
-    );
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -65,18 +61,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const outcome = await gradeSubmission(answers);
+  const cookiePeserta = await readPesertaSession();
+  const source = (body ?? {}) as Record<string, unknown>;
+  const bodyPeserta = (source.peserta ?? {}) as Record<string, unknown>;
+  const asString = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
-  // Persist the result so the admin sees it (best effort; won't block the score).
-  await saveQuizAttempt(
-    {
-      nama: peserta.nama,
-      email: peserta.email,
-      jabatan: peserta.jabatan,
-      lokasi: peserta.lokasi,
-    },
-    outcome,
-  );
+  const nama = cookiePeserta?.nama ?? asString(bodyPeserta.nama);
+  const email = cookiePeserta?.email ?? asString(bodyPeserta.email);
+  const jabatan = cookiePeserta?.jabatan ?? asString(bodyPeserta.jabatan);
+  const lokasi = cookiePeserta?.lokasi ?? asString(bodyPeserta.lokasi);
+
+  if (!nama || !email) {
+    return NextResponse.json(
+      { error: "Identitas peserta tidak lengkap. Isi daftar hadir dulu." },
+      { status: 400 },
+    );
+  }
+
+  const outcome = await gradeSubmission(answers);
+  await saveQuizAttempt({ nama, email, jabatan, lokasi }, outcome);
 
   return NextResponse.json(outcome);
 }

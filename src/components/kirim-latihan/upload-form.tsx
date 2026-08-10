@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FileSpreadsheet,
   FileText,
@@ -61,6 +61,21 @@ export function UploadForm() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [items, setItems] = useState<UploadItem[]>([]);
+
+  // Load the peserta's real upload history so they see their own submissions
+  // after a reload, not just what they uploaded in the current session.
+  useEffect(() => {
+    if (!peserta?.email) return;
+    const url = `/api/kirim-latihan/list?email=${encodeURIComponent(peserta.email)}`;
+    fetch(url)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { uploads?: UploadItem[] } | null) => {
+        if (Array.isArray(data?.uploads)) setItems(data.uploads);
+      })
+      .catch(() => {
+        // best effort — the form still works without prior history
+      });
+  }, [peserta?.email]);
 
   function pick(file: File | undefined) {
     if (!file) return;
