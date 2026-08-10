@@ -18,41 +18,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toaster";
-import { QUIZ_QUESTIONS } from "@/lib/quiz/questions";
-import { inferCategory } from "@/lib/admin/soal-categories";
 import type { SoalDraft } from "@/lib/admin/soal-draft";
 import { cn } from "@/lib/utils";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
-interface SoalItem extends SoalDraft {
+export interface SoalItem extends SoalDraft {
   id: string;
 }
 
-function newId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}`;
-}
-
 /**
- * The admin bank soal list with add/edit/delete on mock state.
+ * The admin bank soal list with add/edit/delete, persisted via the API.
  *
- * Renders every question with its options (the correct one marked). Add opens the
- * form blank; a question's edit opens it seeded from that question; both save into
- * the in-memory list ahead of a real API. Delete removes it. The correct-answer
- * highlight and the shared SoalForm keep create and edit consistent.
+ * Seeded from the database (passed in from the server page), it renders every
+ * question with its options (the correct one marked) and saves each change to the
+ * bank-soal API so it sticks — add (POST), edit (PUT), duplicate, and delete all
+ * hit the server, updating optimistically and reverting on failure. The
+ * correct-answer highlight and the shared SoalForm keep create and edit consistent.
  */
-export function BankSoalList() {
-  const [items, setItems] = useState<SoalItem[]>(() =>
-    QUIZ_QUESTIONS.map((q) => ({
-      id: q.id,
-      soal: q.soal,
-      pilihan: q.pilihan,
-      kunci: q.kunci,
-      kategori: inferCategory(q.id),
-    })),
-  );
+export function BankSoalList({ initialItems }: { initialItems: SoalItem[] }) {
+  const [items, setItems] = useState<SoalItem[]>(initialItems);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<SoalItem | null>(null);
   const [deleting, setDeleting] = useState<SoalItem | null>(null);
@@ -81,43 +66,91 @@ export function BankSoalList() {
     setFormOpen(true);
   }
 
-  function submit(draft: SoalDraft) {
-    if (editing) {
-      setItems((current) =>
-        current.map((item) =>
-          item.id === editing.id ? { ...item, ...draft } : item,
-        ),
-      );
-      toast({ title: "Soal diperbarui", variant: "success" });
-    } else {
-      setItems((current) => [{ id: newId(), ...draft }, ...current]);
-      toast({ title: "Soal ditambahkan", variant: "success" });
-    }
+  const JSON_HEADERS = { "Content-Type": "application/json" };
+
+  async function submit(draft: SoalDraft) {
+    const target = editing;
     setFormOpen(false);
     setEditing(null);
+
+    if (target) {
+      const prev = items;
+      setItems((current) =>
+        current.map((item) =>
+          item.id === target.id ? { ...item, ...draft } : item,
+        ),
+      );
+      try {
+        const res = await fetch(`/api/admin/bank-soal/${target.id}`, {
+          method: "PUT",
+          headers: JSON_HEADERS,
+          body: JSON.stringify(draft),
+        });
+        if (!res.ok) throw new Error();
+        toast({ title: "Soal diperbarui", variant: "success" });
+      } catch {
+        setItems(prev);
+        toast({ title: "Gagal memperbarui soal", variant: "error" });
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/bank-soal", {
+        method: "POST",
+        headers: JSON_HEADERS,
+        body: JSON.stringify(draft),
+      });
+      if (!res.ok) throw new Error();
+      const { soal } = (await res.json()) as { soal: { id: string } };
+      setItems((current) => [{ id: soal.id, ...draft }, ...current]);
+      toast({ title: "Soal ditambahkan", variant: "success" });
+    } catch {
+      toast({ title: "Gagal menambah soal", variant: "error" });
+    }
   }
 
-  function duplicate(item: SoalItem) {
-    setItems((current) => {
-      const index = current.findIndex((i) => i.id === item.id);
-      const copy: SoalItem = {
-        ...item,
-        id: newId(),
-        soal: `${item.soal} (salinan)`,
-        pilihan: [...item.pilihan],
-      };
-      const next = [...current];
-      next.splice(index + 1, 0, copy);
-      return next;
-    });
-    toast({ title: "Soal diduplikasi", variant: "info" });
+  async function duplicate(item: SoalItem) {
+    try {
+      const res = await fetch(`/api/admin/bank-soal/${item.id}/duplicate`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error();
+      const { soal } = (await res.json()) as { soal: { id: string } };
+      setItems((current) => {
+        const index = current.findIndex((i) => i.id === item.id);
+        const copy: SoalItem = {
+          ...item,
+          id: soal.id,
+          soal: `${item.soal} (salinan)`,
+          pilihan: [...item.pilihan],
+        };
+        const next = [...current];
+        next.splice(index + 1, 0, copy);
+        return next;
+      });
+      toast({ title: "Soal diduplikasi", variant: "info" });
+    } catch {
+      toast({ title: "Gagal menduplikasi soal", variant: "error" });
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleting) return;
-    setItems((current) => current.filter((i) => i.id !== deleting.id));
-    toast({ title: "Soal dihapus", variant: "info" });
+    const id = deleting.id;
+    const prev = items;
+    setItems((current) => current.filter((i) => i.id !== id));
     setDeleting(null);
+    try {
+      const res = await fetch(`/api/admin/bank-soal/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      toast({ title: "Soal dihapus", variant: "info" });
+    } catch {
+      setItems(prev);
+      toast({ title: "Gagal menghapus soal", variant: "error" });
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -34,36 +34,45 @@ export function ReviewPanel({
   initialStatus: UploadStatus;
   initialComment?: string;
 }) {
-  const { reviews, saveReview } = useReviews();
-  // A previously saved decision wins over the mock default.
-  const saved = reviews[uploadId];
-  const [status, setStatus] = useState<UploadStatus>(
-    saved?.status ?? initialStatus,
-  );
-  const [comment, setComment] = useState(saved?.comment ?? initialComment);
+  const { saveReview } = useReviews();
+  // Server truth wins on load — the localStorage cache is optimistic-only, so
+  // opening the page always shows what the DB actually holds (previous stale
+  // cache from another admin's device is overwritten).
+  const [status, setStatus] = useState<UploadStatus>(initialStatus);
+  const [comment, setComment] = useState(initialComment);
   const [saving, setSaving] = useState(false);
+
+  // Prime the shared review cache from server truth on mount so sibling views
+  // (EmailPreview, LatihanReviewList) see the current DB state, not a stale entry.
+  useEffect(() => {
+    saveReview(uploadId, { status: initialStatus, comment: initialComment });
+  }, [uploadId, initialStatus, initialComment, saveReview]);
 
   async function save() {
     setSaving(true);
     // Optimistic local save so the list/peserta view update immediately.
     saveReview(uploadId, { status, comment });
     try {
-      // Persist to the review API (implemented in the backend phase); the local
-      // save above keeps this working before the endpoint exists.
-      await fetch("/api/admin/review", {
+      const res = await fetch("/api/admin/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadId, status, comment }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast({
+        title: "Tinjauan disimpan",
+        description: `Status: ${status}`,
+        variant: "success",
+      });
     } catch {
-      // Network error — the local save still holds.
+      toast({
+        title: "Gagal menyimpan tinjauan",
+        description: "Cek koneksi lalu coba lagi.",
+        variant: "error",
+      });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    toast({
-      title: "Tinjauan disimpan",
-      description: `Status: ${status}`,
-      variant: "success",
-    });
   }
 
   return (

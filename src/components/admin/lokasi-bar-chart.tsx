@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { getLokasiStats } from "@/lib/admin/dashboard";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 import { LOKASI_ALL } from "@/components/admin/lokasi-filter";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +19,14 @@ import { cn } from "@/lib/utils";
  */
 export function LokasiBarChart({
   activeLokasi = LOKASI_ALL,
+  records,
 }: {
   activeLokasi?: string;
+  records: PesertaRecord[];
 }) {
   const reduceMotion = useReducedMotion();
   const [hover, setHover] = useState<string | null>(null);
-  const stats = getLokasiStats();
+  const stats = getLokasiStats(records);
   const max = Math.max(1, ...stats.map((s) => s.peserta));
   const hasFocus = activeLokasi !== LOKASI_ALL;
 

@@ -1,0 +1,1 @@
+ALTER TABLE "peserta" ADD CONSTRAINT "peserta_training_email_unique" UNIQUE("training_id","email");

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileUp, GraduationCap, MapPin, type LucideIcon } from "lucide-react";
 
 import { LaporanKelulusan } from "@/components/admin/laporan-kelulusan";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 import { cn } from "@/lib/utils";
 
 type TabId = "kelulusan" | "pengumpulan" | "lokasi";
@@ -21,7 +22,7 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
  * tasks, so the panels are placeholders here. The tab list is keyboard- and
  * screen-reader-friendly (role="tab"/"tabpanel").
  */
-export function LaporanTabs() {
+export function LaporanTabs({ records }: { records: PesertaRecord[] }) {
   const [active, setActive] = useState<TabId>("kelulusan");
 
   return (
@@ -66,7 +67,7 @@ export function LaporanTabs() {
         >
           {tab.id === active &&
             (tab.id === "kelulusan" ? (
-              <LaporanKelulusan />
+              <LaporanKelulusan records={records} />
             ) : (
               <div className="bg-card border-border text-muted-foreground rounded-xl border px-4 py-16 text-center text-sm">
                 Laporan {tab.label.toLowerCase()} akan tampil di sini.

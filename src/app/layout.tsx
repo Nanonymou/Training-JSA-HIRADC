@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Training JSA & HIRADC — PT Tiga Persada Benua",
   description:
     "Portal pelatihan interaktif Penyusunan dan Pengisian JSA & HIRADC untuk Tim QHSE PT Tiga Persada Benua.",
+  icons: {
+    icon: "/logo-tpb.svg",
+  },
 };
 
 export default function RootLayout({

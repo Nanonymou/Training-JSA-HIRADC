@@ -13,17 +13,17 @@ import {
   exportPesertaExcel,
   exportPesertaPdf,
 } from "@/lib/admin/peserta-export";
-import { PESERTA_RECORDS } from "@/lib/admin/peserta";
+import type { PesertaRecord } from "@/lib/admin/peserta";
 
 /**
  * Data Peserta with a filter toolbar over the table.
  *
  * Combines a name search, a site filter, and a from/to attendance-date range —
- * all on the client over the mock records — so an admin can narrow to, say, one
- * site in a date window. Dates compare on the ISO day (yyyy-mm-dd), which orders
- * lexicographically. Reset clears everything.
+ * all on the client over the DB-backed records passed in — so an admin can narrow
+ * to, say, one site in a date window. Dates compare on the ISO day (yyyy-mm-dd),
+ * which orders lexicographically. Reset clears everything.
  */
-export function PesertaExplorer() {
+export function PesertaExplorer({ records }: { records: PesertaRecord[] }) {
   const [query, setQuery] = useState("");
   const [lokasi, setLokasi] = useState("all");
   const [from, setFrom] = useState("");
@@ -31,7 +31,7 @@ export function PesertaExplorer() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return PESERTA_RECORDS.filter((peserta) => {
+    return records.filter((peserta) => {
       if (lokasi !== "all" && peserta.lokasi !== lokasi) return false;
       if (
         q &&
@@ -45,7 +45,7 @@ export function PesertaExplorer() {
       if (to && day > to) return false;
       return true;
     });
-  }, [query, lokasi, from, to]);
+  }, [records, query, lokasi, from, to]);
 
   const active = query.trim() !== "" || lokasi !== "all" || from !== "" || to !== "";
   const label = lokasi === "all" ? "semua" : lokasi;
@@ -159,7 +159,7 @@ export function PesertaExplorer() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-muted-foreground text-xs">
-          Menampilkan {filtered.length} dari {PESERTA_RECORDS.length} peserta.
+          Menampilkan {filtered.length} dari {records.length} peserta.
         </p>
         <div className="flex items-center gap-2">
           <Button
