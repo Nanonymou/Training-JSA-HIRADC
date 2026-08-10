@@ -71,6 +71,20 @@
       "when": 1785744005555,
       "tag": "0009_dark_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786372986545,
+      "tag": "0010_third_sersi",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786373407245,
+      "tag": "0011_productive_galactus",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,8 @@ import { getDb } from "@/lib/db/client";
 import { trainings } from "@/lib/db/schema";
 import { ensureSeeded } from "@/lib/db/seed";
 import { TRAINING_MODULES, type TrainingModule } from "@/lib/admin/cms-materi";
+import { MATERI_CHAPTERS } from "@/lib/materi/chapters";
+import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 /**
  * Server-side access to training topics for the multi-training admin screen.
@@ -275,7 +277,10 @@ export async function getAdminTrainings(): Promise<AdminTraining[]> {
     deskripsi: row.deskripsi,
     aktif: row.aktif,
     archived: row.archived,
-    jumlahBab: 0,
+    // The primary training's chapter count comes from the static content
+    // (MATERI_CHAPTERS); other trainings default to 0 until their material is
+    // uploaded via the CMS.
+    jumlahBab: row.slug === DEFAULT_TRAINING_ID ? MATERI_CHAPTERS.length : 0,
     updated: row.updatedAt.toISOString(),
   }));
 }

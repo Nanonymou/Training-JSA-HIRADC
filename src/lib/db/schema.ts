@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -60,20 +61,30 @@ export const questionOptions = pgTable("question_options", {
  * is signed. Department defaults to QHSE; the system stamps waktu_hadir and (from
  * the request) browser and ip.
  */
-export const peserta = pgTable("peserta", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  trainingId: text("training_id").notNull().default("jsa-hiradc"),
-  nama: text("nama").notNull(),
-  email: text("email").notNull(),
-  jabatan: text("jabatan").notNull(),
-  lokasi: text("lokasi").notNull(),
-  departemen: text("departemen").notNull().default("QHSE"),
-  browser: text("browser"),
-  ip: text("ip"),
-  waktuHadir: timestamp("waktu_hadir", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const peserta = pgTable(
+  "peserta",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    trainingId: text("training_id").notNull().default("jsa-hiradc"),
+    nama: text("nama").notNull(),
+    email: text("email").notNull(),
+    jabatan: text("jabatan").notNull(),
+    lokasi: text("lokasi").notNull(),
+    departemen: text("departemen").notNull().default("QHSE"),
+    browser: text("browser"),
+    ip: text("ip"),
+    waktuHadir: timestamp("waktu_hadir", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    /** One peserta row per email per training — re-registering upserts. */
+    trainingEmailUnique: unique("peserta_training_email_unique").on(
+      t.trainingId,
+      t.email,
+    ),
+  }),
+);
 
 /**
  * A recorded quiz result (PRD: QUIZ_RECORD).
@@ -170,9 +181,8 @@ export const trainings = pgTable("trainings", {
  */
 export const materiVersions = pgTable("materi_versions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  trainingId: uuid("training_id")
-    .notNull()
-    .references(() => trainings.id, { onDelete: "cascade" }),
+  /** Training slug — matches the `training_id` text columns elsewhere. */
+  trainingId: text("training_id").notNull().default("jsa-hiradc"),
   version: integer("version").notNull(),
   catatan: text("catatan").notNull().default(""),
   updatedBy: text("updated_by"),
@@ -208,11 +218,7 @@ export const trainingsRelations = relations(trainings, ({ many }) => ({
 
 export const materiVersionsRelations = relations(
   materiVersions,
-  ({ one, many }) => ({
-    training: one(trainings, {
-      fields: [materiVersions.trainingId],
-      references: [trainings.id],
-    }),
+  ({ many }) => ({
     chapters: many(materiChapters),
   }),
 );

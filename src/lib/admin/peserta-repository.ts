@@ -92,16 +92,34 @@ export async function savePeserta(input: {
   const db = getDb();
   if (!db) return;
 
-  await db.insert(pesertaTable).values({
-    trainingId: resolveTrainingId(input.trainingId),
-    nama: input.nama,
-    email: input.email,
-    jabatan: input.jabatan,
-    lokasi: input.lokasi,
-    departemen: input.departemen ?? "QHSE",
-    ip: input.ip,
-    browser: input.browser,
-  });
+  const trainingId = resolveTrainingId(input.trainingId);
+  // Upsert on (training_id, email): a peserta who re-registers has their record
+  // refreshed (latest nama/jabatan/lokasi and a new waktuHadir) instead of
+  // creating a duplicate row that would clutter the admin list and reports.
+  await db
+    .insert(pesertaTable)
+    .values({
+      trainingId,
+      nama: input.nama,
+      email: input.email,
+      jabatan: input.jabatan,
+      lokasi: input.lokasi,
+      departemen: input.departemen ?? "QHSE",
+      ip: input.ip,
+      browser: input.browser,
+    })
+    .onConflictDoUpdate({
+      target: [pesertaTable.trainingId, pesertaTable.email],
+      set: {
+        nama: input.nama,
+        jabatan: input.jabatan,
+        lokasi: input.lokasi,
+        departemen: input.departemen ?? "QHSE",
+        ip: input.ip,
+        browser: input.browser,
+        waktuHadir: new Date(),
+      },
+    });
 }
 
 /** Apply the filter to a set of records. */

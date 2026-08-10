@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { materiChapters, materiVersions } from "@/lib/db/schema";
@@ -8,6 +8,8 @@ import {
   type ConvertedChapter,
   type MateriVersion,
 } from "@/lib/admin/cms-materi";
+import type { MateriChapter } from "@/lib/materi/chapters";
+import { DEFAULT_TRAINING_ID } from "@/lib/training/scope";
 
 /**
  * Server-side access to a training's material version history.
@@ -96,4 +98,79 @@ export async function getMateriVersionPreview(
       .map((section) => section.heading ?? "")
       .filter(Boolean),
   }));
+}
+
+export interface SaveVersionInput {
+  trainingId?: string;
+  catatan?: string;
+  updatedBy?: string;
+  chapters: MateriChapter[];
+  /** When true, the new version becomes the live one (previous is deactivated). */
+  makeCurrent?: boolean;
+}
+
+export interface SavedVersion {
+  id: string;
+  version: number;
+  isCurrent: boolean;
+}
+
+/**
+ * Save a new material version (and its chapters) for a training. Version number
+ * auto-increments per training. When `makeCurrent`, previous versions are marked
+ * non-current so the peserta material follows this one. No-op without a DB.
+ */
+export async function saveMateriVersion(
+  input: SaveVersionInput,
+): Promise<SavedVersion | null> {
+  const db = getDb();
+  if (!db) return null;
+
+  const trainingId = input.trainingId ?? DEFAULT_TRAINING_ID;
+
+  // Next version number = max + 1, per training.
+  const [{ next }] = await db
+    .select({ next: sql<number>`COALESCE(MAX(${materiVersions.version}), 0) + 1` })
+    .from(materiVersions)
+    .where(eq(materiVersions.trainingId, trainingId));
+
+  const makeCurrent = input.makeCurrent !== false; // default true
+
+  if (makeCurrent) {
+    await db
+      .update(materiVersions)
+      .set({ isCurrent: false })
+      .where(eq(materiVersions.trainingId, trainingId));
+  }
+
+  const [version] = await db
+    .insert(materiVersions)
+    .values({
+      trainingId,
+      version: Number(next),
+      catatan: input.catatan ?? "",
+      updatedBy: input.updatedBy ?? null,
+      isCurrent: makeCurrent,
+    })
+    .returning({ id: materiVersions.id, version: materiVersions.version });
+
+  // Persist the chapters (title + sections). One row per chapter, JSON sections.
+  if (input.chapters.length > 0) {
+    await db.insert(materiChapters).values(
+      input.chapters.map((chapter, index) => ({
+        versionId: version.id,
+        position: index,
+        title: chapter.title,
+        summary: chapter.summary ?? "",
+        minutes: chapter.minutes ?? 0,
+        sections: chapter.sections as unknown as unknown[],
+      })),
+    );
+  }
+
+  return {
+    id: version.id,
+    version: Number(version.version),
+    isCurrent: makeCurrent,
+  };
 }

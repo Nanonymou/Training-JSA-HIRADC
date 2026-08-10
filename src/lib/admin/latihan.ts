@@ -20,6 +20,8 @@ export interface AdminUpload {
   fileSize: number;
   url: string;
   status: UploadStatus;
+  /** Reviewer's comment on the submission, if any. */
+  adminComment?: string | null;
   waktuUnggah: string;
   previewKind: PreviewKind;
 }

@@ -53,6 +53,7 @@ const UPLOAD_COLS = {
   fileSize: uploads.fileSize,
   urlBerkas: uploads.urlBerkas,
   status: uploads.status,
+  adminComment: uploads.adminComment,
   waktuUnggah: uploads.waktuUnggah,
   trainingId: uploads.trainingId,
 };
@@ -82,6 +83,7 @@ export async function getReviewUploads(
     fileSize: row.fileSize,
     url: resolveUploadUrl(row.id, row.urlBerkas),
     status: row.status as AdminUpload["status"],
+    adminComment: row.adminComment,
     waktuUnggah: row.waktuUnggah.toISOString(),
     previewKind: previewKindFor(row.fileExt),
   }));
@@ -111,6 +113,7 @@ export async function getReviewUploadById(
     fileSize: row.fileSize,
     url: resolveUploadUrl(row.id, row.urlBerkas),
     status: row.status as AdminUpload["status"],
+    adminComment: row.adminComment,
     waktuUnggah: row.waktuUnggah.toISOString(),
     previewKind: previewKindFor(row.fileExt),
   };

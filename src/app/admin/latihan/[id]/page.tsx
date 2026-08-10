@@ -88,7 +88,11 @@ export default async function UploadDetailPage({
             />
           </div>
           <div className="flex flex-col gap-4">
-            <ReviewPanel uploadId={upload.id} initialStatus={upload.status} />
+            <ReviewPanel
+              uploadId={upload.id}
+              initialStatus={upload.status}
+              initialComment={upload.adminComment ?? ""}
+            />
             <EmailPreview
               uploadId={upload.id}
               pesertaNama={upload.pesertaNama}
